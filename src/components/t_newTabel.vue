@@ -1,7 +1,7 @@
 <script>
 class Zelle {
   activ;
-  constructor(zeile, spalte, zellenInhalt) {
+  constructor(zeile = Number, spalte = Number, zellenInhalt = "") {
     this.zeile = zeile;
     this.spalte = spalte;
     this.zellenInhalt = zellenInhalt;
@@ -11,6 +11,8 @@ class Zelle {
 }
 
 class Tabelle {
+  lastZelle = new Zelle();
+  currentZelle = new Zelle();
   constructor(tname, data) {
     this.tname = tname;
     this.data = data;

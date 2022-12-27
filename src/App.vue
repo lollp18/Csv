@@ -3,8 +3,10 @@ import "./assets/main.css";
 import papa from "papaparse";
 import btnDelet from "./components/t_btnDelet.vue";
 import newTabel from "./components/t_newTabel.vue";
+import bearbeiten from "./components/t_Bearbeiten.vue";
 import { extend, isArray } from "@vue/shared";
 import { ref } from "vue";
+
 class Zelle {
   activ;
   constructor(zeile = Number, spalte = Number, zellenInhalt = "") {
@@ -37,9 +39,11 @@ export default {
   components: {
     btnDelet,
     newTabel,
+    bearbeiten,
   },
   data() {
     return {
+      drag: false,
       Tabelle: {
         tname: "Plazhalter",
         data: [
@@ -50,16 +54,16 @@ export default {
         lastZelle: new Zelle(),
         currentZelle: new Zelle(),
       },
+      TabelenGröße: {},
+      currentTabelle: [],
 
-      currentTabelle: Array(),
-
-      TDownload: Array(),
-      href: String(),
-      filename: String(),
+      TDownload: [],
+      href: "",
+      filename: "",
       darkMode: false,
       SelektetEL: "zeile",
-      TabelELAnzahl: Number(),
-      selectTabelId: Number,
+      zeile: {},
+      spalte: {},
       apiURL: "http://localhost/",
       tabelhidde: true,
       noTabelhidde: false,
@@ -247,12 +251,15 @@ export default {
         const zelle = new Zelle(höhe + 1, i);
         zeile.push(zelle);
       }
-      this.Tabelle.data.push(zeile);
+      return zeile;
     },
     GeneratZeile() {
-      for (let i = 0; i < this.TabelELAnzahl; i++) {
-        this.createZeile();
+      const zeilen = [];
+      for (let i = 0; i < this.zeile.anzahl; i++) {
+        const zeile = this.createZeile();
+        zeilen.push(zeile);
       }
+      return zeilen;
     },
     GenaratSpalte() {
       for (let i = 0; i < this.TabelELAnzahl; i++) {
@@ -310,11 +317,23 @@ export default {
       this.currentTabelle.unshift(tabelle);
       this.Tabelle = tabelle;
     },
+    hinzufügen(data) {
+      this.zeile = data;
+      const zeilen = GeneratZeile();
+      const zeilePos = this.zeile.zeile - 1;
+      if (zeilePos == 0 && this.zeile.position == "Ü") {
+        this.Tabelle.data.unshift(zeilen);
+      }
+
+      this.Tabelle.data.splice();
+    },
+    getIsertIndex() {},
   },
 };
 </script>
 
 <template>
+  <bearbeiten @data="hinzufügen" />
   <newTabel
     :open="newTabelopen"
     @close="newTabelopen = false"
@@ -328,14 +347,11 @@ export default {
         {{ tabel.tname }}
       </option>
     </select>
-    <div>
-      <select class="auswahl-container add-tabellEL" @change="selectTabellEL">
-        <option value="zeile">Zeile Hinzufügen</option>
-        <option value="spalte">Spalte Hinzufügen</option>
-      </select>
-      <input type="number" class="add-tabellEL" @input="anzahlTabellEL" />
-    </div>
-    <button class="btn-download" @click="GenaretTabellEL">Generiren</button>
+    <button class="btn-download">Tabelle Bearbeiten</button>
+    <button class="btn-download" @click="newTabelopen = true">
+      Neue Tabelle erstellen
+    </button>
+
     <a
       class="btn-download"
       @click="downlodFile"
@@ -344,9 +360,7 @@ export default {
       >Download</a
     >
     <button class="btn-download" @click="DeletTabel">Tabelle Löschen</button>
-    <button class="btn-download" @click="newTabelopen = true">
-      Neue Tabelle erstellen
-    </button>
+
     <label class="switch">
       <input type="checkbox" @click="darkMode" />
       <span class="slider round"></span>
@@ -369,7 +383,7 @@ export default {
 
       <tbody>
         <div class="rapperTop-btnDelet">
-          <div class="zelle"></div>
+          <div class="zelle-placeholder"></div>
           <btnDelet
             v-for="(item, i) in Tabelle.data[0]"
             @click="spalteLöschen(i)"
@@ -378,13 +392,15 @@ export default {
 
         <tr>
           <td class="t-header">
-            <btnDelet @click="zeileLöschen(0)" />
-            <div
-              v-for="(item, i) in Tabelle.data[0]"
-              :class="item.activ ? 'zelle-activ' : 'zelle'"
-              @click="getClickedItem(0, i, item.zellenInhalt)"
-            >
-              {{ item.zellenInhalt }}
+            <btnDelet />
+            <div class="t-header">
+              <div
+                v-for="(item, i) in Tabelle.data[0]"
+                :class="item.activ ? 'zelle-activ' : 'zelle'"
+                @click="getClickedItem(0, i, item.zellenInhalt)"
+              >
+                {{ item.zellenInhalt }}
+              </div>
             </div>
           </td>
         </tr>
@@ -630,10 +646,16 @@ tbody {
 .zelle-activ {
   overflow: hidden;
   text-align: center;
-  border: 1px solid var(--black);
+  border: 2px solid var(--black);
 
   height: 2.5rem;
   width: 7.9rem;
   transition: all 0.3ms;
+}
+.zelle-placeholder {
+  border: 1px solid var(--table-border-color);
+  background-color: #f8f9fa;
+  height: 2.5rem;
+  width: 7.9rem;
 }
 </style>
