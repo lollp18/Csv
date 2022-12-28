@@ -1,40 +1,51 @@
 <script>
-import "./assets/main.css";
-import papa from "papaparse";
-import btnDelet from "./components/t_btnDelet.vue";
-import newTabel from "./components/t_newTabel.vue";
-import bearbeiten from "./components/t_Bearbeiten.vue";
-import { extend, isArray } from "@vue/shared";
-import { ref } from "vue";
+import "./assets/main.css"
+import papa from "papaparse"
+import btnDelet from "./components/t_btnDelet.vue"
+import newTabel from "./components/t_newTabel.vue"
+import bearbeiten from "./components/t_Bearbeiten.vue"
+
+import { extend, isArray } from "@vue/shared"
+import { ref } from "vue"
 
 class Zelle {
-  activ;
-  constructor(zeile = Number, spalte = Number, zellenInhalt = "") {
-    this.zeile = zeile;
-    this.spalte = spalte;
-    this.zellenInhalt = zellenInhalt;
+  activ
+  constructor(zellenInhalt = "") {
+    this.zellenInhalt = zellenInhalt
 
-    this.activ = false;
+    this.activ = false
   }
 }
 
 class Tabelle {
-  lastZelle = new Zelle();
-  currentZelle = new Zelle();
+  lastZelle = {
+    zeile: undefined,
+    spalten: undefined,
+    zellenInhalt: "",
+    activ: false,
+  }
+  currentZelle = {
+    zeile: undefined,
+    spalten: undefined,
+    zellenInhalt: "",
+    activ: false,
+  }
   constructor(tname, data) {
-    this.tname = tname;
-    this.data = data;
+    this.tname = tname
+    this.data = data
   }
 }
 
 export default {
   async created() {
-    await this.getTabels();
-    this.HasTabels();
+    await this.getTabels()
+    this.HasTabels()
+    this.setTabelSize()
   },
   async updated() {
-    await this.saveTabels();
-    this.HasTabels();
+    await this.saveTabels()
+    this.HasTabels()
+    this.setTabelSize()
   },
   components: {
     btnDelet,
@@ -51,10 +62,23 @@ export default {
           ["a", "b", "c", "d", "e", "f", "g", "h"],
           ["a", "b", "c", "d", "e", "f", "g", "h"],
         ],
-        lastZelle: new Zelle(),
-        currentZelle: new Zelle(),
+        lastZelle: {
+          zeile: undefined,
+          spalten: undefined,
+          zellenInhalt: "",
+          activ: false,
+        },
+        currentZelle: {
+          zeile: undefined,
+          spalten: undefined,
+          zellenInhalt: "",
+          activ: false,
+        },
       },
-      TabelenGröße: {},
+      TabelenGröße: {
+        hohe: 0,
+        breite: 0,
+      },
       currentTabelle: [],
 
       TDownload: [],
@@ -68,287 +92,317 @@ export default {
       tabelhidde: true,
       noTabelhidde: false,
       newTabelopen: ref(false),
-    };
+    }
   },
   methods: {
     HasTabels() {
       if (this.currentTabelle.length == 0) {
-        this.tabelhidde = true;
-        this.noTabelhidde = false;
+        this.tabelhidde = true
+        this.noTabelhidde = false
       } else {
-        this.tabelhidde = false;
-        this.noTabelhidde = true;
+        this.tabelhidde = false
+        this.noTabelhidde = true
       }
     },
     async getFile(e) {
-      const data = await this.getData(e);
+      const data = await this.getData(e)
 
-      const tabelle = this.createTabel(data);
+      const tabelle = this.createTabel(data)
 
-      this.currentTabelle.push(tabelle);
+      this.currentTabelle.push(tabelle)
 
-      this.Tabelle = tabelle;
+      this.Tabelle = tabelle
 
-      console.log(this.currentTabelle);
+      console.log(this.currentTabelle)
+    },
+    cerateTabelldata(data) {
+      const Tdata = []
+      data.forEach((zeile) => {
+        const Tzeile = []
+        Tdata.push(Tzeile)
+        zeile.forEach((item) => {
+          const zelle = new Zelle(item)
+          Tzeile.push(zelle)
+        })
+      })
+      return Tdata
     },
     createTabel(data) {
-      const Tdata = [];
-      data.data.forEach((zeile, zeileID) => {
-        const Tzeile = [];
-        Tdata.push(Tzeile);
-        zeile.forEach((item, spalteID) => {
-          const zelle = new Zelle(zeileID, spalteID, item);
-          Tzeile.push(zelle);
-        });
-      });
-      const Tabell = new Tabelle(data.fileName, Tdata);
-      return Tabell;
+      const Tdata = this.cerateTabelldata(data.data)
+      const Tabell = new Tabelle(data.fileName, Tdata)
+      return Tabell
     },
     async getData(e) {
-      const [file] = await e.target.files;
-      const fileName = this.FormatFilename(file.name);
-      const content = await file.text();
+      const [file] = await e.target.files
+      const fileName = this.FormatFilename(file.name)
+      const content = await file.text()
 
-      const datas = papa.parse(content);
-      const data = datas.data;
+      const datas = papa.parse(content)
+      const data = datas.data
 
       return {
         fileName,
         data,
-      };
+      }
     },
     getClickedItem(zeile, spalte, zelleninhalt) {
-      this.SaveLastZelle();
+      this.SaveLastZelle()
 
-      this.SetCurrentZelle(zeile, spalte, zelleninhalt);
+      this.SetCurrentZelle(zeile, spalte, zelleninhalt)
 
-      this.SetFocusedZelle();
+      this.SetFocusedZelle()
     },
     SaveLastZelle() {
-      this.Tabelle.lastZelle.zeile = this.Tabelle.currentZelle.zeile;
-      this.Tabelle.lastZelle.spalte = this.Tabelle.currentZelle.spalte;
+      this.Tabelle.lastZelle.zeile = this.Tabelle.currentZelle.zeile
+      this.Tabelle.lastZelle.spalte = this.Tabelle.currentZelle.spalte
       this.Tabelle.lastZelle.zellenInhalt =
-        this.Tabelle.currentZelle.zellenInhalt;
-      this.Tabelle.lastZelle.activ = this.Tabelle.currentZelle.activ;
+        this.Tabelle.currentZelle.zellenInhalt
+      this.Tabelle.lastZelle.activ = this.Tabelle.currentZelle.activ
     },
     SetCurrentZelle(zeile, spalte, zelleninhalt) {
-      this.Tabelle.currentZelle.zeile = zeile;
-      this.Tabelle.currentZelle.spalte = spalte;
-      this.Tabelle.currentZelle.zellenInhalt = zelleninhalt;
+      this.Tabelle.currentZelle.zeile = zeile
+      this.Tabelle.currentZelle.spalte = spalte
+      this.Tabelle.currentZelle.zellenInhalt = zelleninhalt
     },
     SetFocusedZelle() {
       this.Tabelle.data[this.Tabelle.currentZelle.zeile][
         this.Tabelle.currentZelle.spalte
-      ].activ = true;
+      ].activ = true
       this.Tabelle.data[this.Tabelle.lastZelle.zeile][
         this.Tabelle.lastZelle.spalte
-      ].activ = false;
+      ].activ = false
     },
     setZellenValue() {
       this.Tabelle.data[this.Tabelle.currentZelle.zeile][
         this.Tabelle.currentZelle.spalte
-      ].zellenInhalt = this.Tabelle.currentZelle.zellenInhalt;
+      ].zellenInhalt = this.Tabelle.currentZelle.zellenInhalt
     },
 
     async saveTabels() {
       try {
-        const tabels = this.currentTabelle;
-        const json = JSON.stringify(tabels);
+        const tabels = this.currentTabelle
+        const json = JSON.stringify(tabels)
 
         const optons = {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: json,
-        };
+        }
 
-        const res = await fetch(this.apiURL, optons);
-        console.log(res, "post");
+        const res = await fetch(this.apiURL, optons)
+        console.log(res, "post")
       } catch (error) {
-        console.log(e.message);
+        console.log(e.message)
       }
     },
     async getTabels() {
       try {
-        const res = await fetch(this.apiURL);
-        const data = await res.json();
-        console.log(data);
+        const res = await fetch(this.apiURL)
+        const data = await res.json()
+        console.log(data)
 
         if (data.length == 0) {
-          this.currentTabelle = data;
-          this.tabelhidde = true;
-          this.noTabelhidde = false;
+          this.currentTabelle = data
+          this.tabelhidde = true
+          this.noTabelhidde = false
         } else {
-          this.currentTabelle = data;
-          this.Tabelle = this.currentTabelle[0];
+          this.currentTabelle = data
+          this.Tabelle = this.currentTabelle[0]
         }
       } catch (e) {
-        console.log(e.message);
+        console.log(e.message)
       }
     },
     getSelectTabel(e) {
-      this.selectTabelId = e.target.value;
-      console.log(this.selectTabelId);
-      this.Tabelle = this.currentTabelle[this.selectTabelId];
-      console.log(this.Tabelle);
+      this.selectTabelId = e.target.value
+      console.log(this.selectTabelId)
+      this.Tabelle = this.currentTabelle[this.selectTabelId]
+      console.log(this.Tabelle)
     },
     getTabelOption(e) {
-      this.Tabelle = this.currentTabelle[this.selectTabelId];
+      this.Tabelle = this.currentTabelle[this.selectTabelId]
     },
     FormatFilename(fileName) {
-      const newFilename = fileName.slice(0, -4);
-      return newFilename;
+      const newFilename = fileName.slice(0, -4)
+      return newFilename
     },
     downlodFile() {
-      this.FormatData();
-      const csv = papa.unparse(this.TDownload);
-      console.log(csv);
-      this.href = `data:text/csv;charset=utf-8,${csv}`;
-      this.filename = this.Tabelle.tname;
+      const data = this.FormatData()
+      const csv = papa.unparse(data)
+      console.log(csv)
+      this.href = `data:text/csv;charset=utf-8,${csv}`
+      this.filename = this.Tabelle.tname
     },
     FormatData() {
-      const Tdata = [];
+      const Tdata = []
       this.Tabelle.data.forEach((item) => {
-        const zeilen = [];
+        const zeilen = []
 
-        Tdata.push(zeilen);
+        Tdata.push(zeilen)
         item.forEach((item) => {
-          const e = Object.entries(item);
-          const a = e[3][1];
-
-          zeilen.push(a);
-        });
-      });
-      this.TDownload = Tdata;
+          const e = Object.entries(item).flat()
+          const a = e[3]
+          zeilen.push(a)
+        })
+      })
+      return Tdata
     },
 
     darkMode() {
-      document.body.classList.add("darkMode");
-    },
-
-    selectTabellEL(e) {
-      this.SelektetEL = e.target.value;
-      console.log(this.SelektetEL);
-    },
-    anzahlTabellEL(e) {
-      this.TabelELAnzahl = e.target.value;
-    },
-    GenaretTabellEL() {
-      switch (this.SelektetEL) {
-        case "zeile":
-          this.GeneratZeile();
-          break;
-        case "spalte":
-          this.GenaratSpalte();
-          break;
-      }
-    },
-    createZeile() {
-      const höhe = this.Tabelle.data.length;
-      const breite = this.Tabelle.data[0].length;
-      const zeile = [];
-
-      for (let i = 0; i < breite; i++) {
-        const zelle = new Zelle(höhe + 1, i);
-        zeile.push(zelle);
-      }
-      return zeile;
-    },
-    GeneratZeile() {
-      const zeilen = [];
-      for (let i = 0; i < this.zeile.anzahl; i++) {
-        const zeile = this.createZeile();
-        zeilen.push(zeile);
-      }
-      return zeilen;
-    },
-    GenaratSpalte() {
-      for (let i = 0; i < this.TabelELAnzahl; i++) {
-        this.createSpalte();
-      }
-    },
-    createSpalte() {
-      const höhe = this.Tabelle.data.length;
-      const breite = this.Tabelle.data[0].length;
-
-      for (let i = 0; i < höhe; i++) {
-        const zelle = new Zelle(i, breite + 1);
-
-        this.Tabelle.data[i].push(zelle);
-      }
+      document.body.classList.add("darkMode")
     },
     spalteLöschen(i) {
       this.Tabelle.data.forEach((zeile) => {
-        zeile.splice(i, 1);
-      });
-      console.log(this.Tabelle.data);
+        zeile.splice(i, 1)
+      })
+      console.log(this.Tabelle.data)
     },
     zeileLöschen(i) {
-      this.Tabelle.data.splice(i, 1);
-      console.log(this.Tabelle.data);
+      this.Tabelle.data.splice(i, 1)
+      console.log(this.Tabelle.data)
     },
     async DeletTabel() {
-      await this.Delettabel();
+      await this.Delettabel()
 
-      await this.getTabels();
-      this.HasTabels();
-      console.log(this.currentTabelle);
+      await this.getTabels()
+      this.HasTabels()
+      console.log(this.currentTabelle)
     },
     async Delettabel() {
       try {
         const TabelleInfo = {
           id: this.selectTabelId,
-        };
-        const json = JSON.stringify(TabelleInfo);
+        }
+        const json = JSON.stringify(TabelleInfo)
 
         const optons = {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: json,
-        };
+        }
 
-        const res = await fetch(this.apiURL, optons);
-        console.log(res);
+        const res = await fetch(this.apiURL, optons)
+        console.log(res)
       } catch (e) {
-        console.log(e.message);
+        console.log(e.message)
       }
     },
     insertTabel(tabelle) {
-      this.newTabelopen = false;
-      this.currentTabelle.unshift(tabelle);
-      this.Tabelle = tabelle;
+      this.newTabelopen = false
+      this.currentTabelle.unshift(tabelle)
+      this.Tabelle = tabelle
     },
-    hinzufügen(data) {
-      this.zeile = data;
-      const zeilen = GeneratZeile();
-      const zeilePos = this.zeile.zeile - 1;
-      if (zeilePos == 0 && this.zeile.position == "Ü") {
-        this.Tabelle.data.unshift(zeilen);
-      }
 
-      this.Tabelle.data.splice();
+    setTabelSize() {
+      this.TabelenGröße.hohe = this.Tabelle.data.length
+      this.TabelenGröße.breite = this.Tabelle.data[0].length
     },
-    getIsertIndex() {},
+    createZeile() {
+      this.setTabelSize()
+
+      const zeile = []
+
+      for (let i = 0; i < this.TabelenGröße.breite; i++) {
+        const zelle= new Zelle("")
+        zeile.push(zelle)
+      }
+      return zeile
+    },
+    GeneratZeile() {
+      const zeilen = []
+      for (let i = 0; i < this.zeile.anzahl; i++) {
+        const zeile = this.createZeile()
+        zeilen.push(zeile)
+      }
+      return zeilen
+    },
+    GenaratSpalte() {
+      for (let i = 0; i < this.TabelELAnzahl; i++) {
+        this.createSpalte()
+      }
+    },
+    createSpalte() {
+      const höhe = this.Tabelle.data.length
+      const breite = this.Tabelle.data[0].length
+
+      for (let i = 0; i < höhe; i++) {
+        const zelle = new Zelle(i, breite + 1)
+
+        this.Tabelle.data[i].push(zelle)
+      }
+    },
+
+    hinzufügen(zeile) {
+      this.zeile = zeile
+      console.log(this.zeile)
+
+      
+
+      const zeilen = this.GeneratZeile()
+
+      const zeilePos = this.zeile.zeile - 1
+      if (zeilePos == 0 && this.zeile.position == "Ü") {
+        zeilen.forEach((zeile) => {
+          this.Tabelle.data.unshift(zeile)
+        })
+      }
+      if (
+        zeilePos == this.TabelenGröße.hohe - 1 &&
+        this.zeile.position == "U"
+      ) {
+        zeilen.forEach((zeile) => {
+          this.Tabelle.data.push(zeile)
+        })
+      } else {
+        const Pos = this.getIsertIndex(zeilePos)
+        zeilen.forEach((zeile) => {
+          this.Tabelle.data.splice(Pos, 0, zeile)
+        })
+      }
+       
+      console.log(this.Tabelle.data)
+    },
+    getIsertIndex(pos) {
+      if (this.zeile.position == "Ü") {
+        return pos
+      } else {
+        const newPos = pos + 1
+        return newPos
+      }
+    },
   },
-};
+}
 </script>
 
 <template>
-  <bearbeiten @data="hinzufügen" />
+  <bearbeiten
+    @data="hinzufügen"
+    :TabellenGröße="TabelenGröße" />
   <newTabel
     :open="newTabelopen"
     @close="newTabelopen = false"
-    @NewTabel="insertTabel"
-  />
+    @NewTabel="insertTabel" />
 
   <header>
-    <input class="file-input" type="file" @change="getFile" accept=".csv" />
-    <select class="auswahl-container" @change="getSelectTabel">
-      <option v-for="(tabel, i) in currentTabelle" :key="i" :value="i">
+    <input
+      class="file-input"
+      type="file"
+      @change="getFile"
+      accept=".csv" />
+    <select
+      class="auswahl-container"
+      @change="getSelectTabel">
+      <option
+        v-for="(tabel, i) in currentTabelle"
+        :key="i"
+        :value="i">
         {{ tabel.tname }}
       </option>
     </select>
     <button class="btn-download">Tabelle Bearbeiten</button>
-    <button class="btn-download" @click="newTabelopen = true">
+    <button
+      class="btn-download"
+      @click="newTabelopen = true">
       Neue Tabelle erstellen
     </button>
 
@@ -359,10 +413,16 @@ export default {
       :download="filename"
       >Download</a
     >
-    <button class="btn-download" @click="DeletTabel">Tabelle Löschen</button>
+    <button
+      class="btn-download"
+      @click="DeletTabel">
+      Tabelle Löschen
+    </button>
 
     <label class="switch">
-      <input type="checkbox" @click="darkMode" />
+      <input
+        type="checkbox"
+        @click="darkMode" />
       <span class="slider round"></span>
     </label>
   </header>
@@ -372,33 +432,42 @@ export default {
     </div>
     <table :class="tabelhidde ? 'hidde' : ''">
       <div class="tabel-info">
-        <input class="tabel-name" v-model="Tabelle.tname" />
+        <input
+          class="tabel-name"
+          v-model="Tabelle.tname" />
         <input
           class="zellen-inhalt"
           type="text"
           @input="setZellenValue"
-          v-model="Tabelle.currentZelle.zellenInhalt"
-        />
+          v-model="Tabelle.currentZelle.zellenInhalt" />
       </div>
 
       <tbody>
         <div class="rapperTop-btnDelet">
           <div class="zelle-placeholder"></div>
+          <div class="zelle-placeholder"></div>
           <btnDelet
             v-for="(item, i) in Tabelle.data[0]"
-            @click="spalteLöschen(i)"
-          />
+            @click="spalteLöschen(i)" />
         </div>
-
+        <div class="rapperTop-btnDelet">
+          <div class="zelle-placeholder"></div>
+          <div class="zelle-placeholder"></div>
+          <div
+            class="zelle-nummer"
+            v-for="(item, i) in Tabelle.data[0]">
+            {{ i + 1 }}
+          </div>
+        </div>
         <tr>
           <td class="t-header">
-            <btnDelet />
+            <btnDelet @click="zeileLöschen(0)" />
+            <div class="zelle-nummer">1</div>
             <div class="t-header">
               <div
                 v-for="(item, i) in Tabelle.data[0]"
                 :class="item.activ ? 'zelle-activ' : 'zelle'"
-                @click="getClickedItem(0, i, item.zellenInhalt)"
-              >
+                @click="getClickedItem(0, i, item.zellenInhalt)">
                 {{ item.zellenInhalt }}
               </div>
             </div>
@@ -407,11 +476,23 @@ export default {
 
         <tr class="t-ab-raper">
           <div>
-            <div class="rapperSide-btnDelet" v-for="(item, i) in Tabelle.data">
+            <div
+              class="rapperSide-btnDelet"
+              v-for="(item, i) in Tabelle.data">
               <btnDelet
                 v-if="Tabelle.data[i] != Tabelle.data[0]"
-                @click="zeileLöschen(i)"
-              />
+                @click="zeileLöschen(i)" />
+            </div>
+          </div>
+          <div>
+            <div
+              class="rapperSide-btnDelet"
+              v-for="(item, i) in Tabelle.data">
+              <div
+                class="zelle-nummer"
+                v-if="Tabelle.data[i] != Tabelle.data[0]">
+                {{ i + 1 }}
+              </div>
             </div>
           </div>
           <td class="t-aside">
@@ -421,8 +502,7 @@ export default {
                   <div
                     :class="el.activ ? 'zelle-activ' : 'zelle'"
                     @click="getClickedItem(i, elI, el.zellenInhalt)"
-                    v-if="elI < 1"
-                  >
+                    v-if="elI < 1">
                     {{ el.zellenInhalt }}
                   </div>
                 </div>
@@ -431,13 +511,14 @@ export default {
           </td>
           <td class="t-body">
             <div v-for="(item, i) in Tabelle.data">
-              <div class="zeile" v-if="Tabelle.data[i] != Tabelle.data[0]">
+              <div
+                class="zeile"
+                v-if="Tabelle.data[i] != Tabelle.data[0]">
                 <div v-for="(el, elI) in item">
                   <div
                     :class="el.activ ? 'zelle-activ' : 'zelle'"
                     @click="getClickedItem(i, elI, el.zellenInhalt)"
-                    v-if="elI > 0"
-                  >
+                    v-if="elI > 0">
                     {{ el.zellenInhalt }}
                   </div>
                 </div>
@@ -655,6 +736,13 @@ tbody {
 .zelle-placeholder {
   border: 1px solid var(--table-border-color);
   background-color: #f8f9fa;
+  height: 2.5rem;
+  width: 7.9rem;
+}
+.zelle-nummer {
+  text-align: center;
+  border: 1px solid var(--table-border-color);
+
   height: 2.5rem;
   width: 7.9rem;
 }

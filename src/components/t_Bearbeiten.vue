@@ -1,6 +1,9 @@
 <script>
 export default {
   name: "DraggableDiv",
+  props: {
+    TabellenGröße: Object,
+  },
   data() {
     return {
       bearbeiten: {
@@ -10,6 +13,16 @@ export default {
           anzahl: undefined,
         },
         spalten: {},
+        tauschen: {
+          zeilen: {
+            erste: undefined,
+            zweiete: undefined,
+          },
+          spalten: {
+            erste: undefined,
+            zweiete: undefined,
+          },
+        },
       },
 
       positions: {
@@ -18,52 +31,54 @@ export default {
         movementX: 0,
         movementY: 0,
       },
-    };
+    }
   },
   methods: {
     dragMouseDown(event) {
-      event.preventDefault();
+      event.preventDefault()
       // get the mouse cursor position at startup:
-      this.positions.clientX = event.clientX;
-      this.positions.clientY = event.clientY;
-      document.onmousemove = this.elementDrag;
-      document.onmouseup = this.closeDragElement;
+      this.positions.clientX = event.clientX
+      this.positions.clientY = event.clientY
+      document.onmousemove = this.elementDrag
+      document.onmouseup = this.closeDragElement
     },
     elementDrag(event) {
-      event.preventDefault();
-      this.positions.movementX = this.positions.clientX - event.clientX;
-      this.positions.movementY = this.positions.clientY - event.clientY;
-      this.positions.clientX = event.clientX;
-      this.positions.clientY = event.clientY;
+      event.preventDefault()
+      this.positions.movementX = this.positions.clientX - event.clientX
+      this.positions.movementY = this.positions.clientY - event.clientY
+      this.positions.clientX = event.clientX
+      this.positions.clientY = event.clientY
       // set the element's new position:
       this.$refs.draggableContainer.style.top =
         this.$refs.draggableContainer.offsetTop -
         this.positions.movementY +
-        "px";
+        "px"
       this.$refs.draggableContainer.style.left =
         this.$refs.draggableContainer.offsetLeft -
         this.positions.movementX +
-        "px";
+        "px"
     },
     closeDragElement() {
-      document.onmouseup = null;
-      document.onmousemove = null;
+      document.onmouseup = null
+      document.onmousemove = null
     },
     getOption(e) {
-      this.bearbeiten.zeilen.position = e.target.value;
-      console.log(this.bearbeiten.zeilen.position);
+      this.bearbeiten.zeilen.position = e.target.value
+      console.log(this.bearbeiten.zeilen.position)
     },
     einfügen() {
-
-this.$emit("data",this.bearbeiten.spalten)
-
+      this.$emit("data", this.bearbeiten.zeilen)
     },
   },
-};
+}
 </script>
 <template>
-  <div ref="draggableContainer" id="draggable-container">
-    <div id="draggable-header" @mousedown="dragMouseDown">
+  <div
+    ref="draggableContainer"
+    id="draggable-container">
+    <div
+      id="draggable-header"
+      @mousedown="dragMouseDown">
       <slot name="header"><ion-icon name="keypad-outline"></ion-icon></slot>
     </div>
     <slot name="main">
@@ -74,18 +89,32 @@ this.$emit("data",this.bearbeiten.spalten)
             <input
               v-model="bearbeiten.zeilen.zeile"
               placeholder="Welche zeile"
-            />
+              type="number" />
             <select @change="getOption">
               <option value="Ü">Über</option>
               <option value="U">Unter</option>
             </select>
-            <input v-model="bearbeiten.zeilen.anzahl" placeholder="Anzahl" />
+            <input
+              v-model="bearbeiten.zeilen.anzahl"
+              placeholder="Anzahl"
+              type="number" />
             <button @click="einfügen">Einfügen</button>
           </div>
           <div class="b2 box"></div>
         </div>
         <div class="section-rapper se2">
-          <div class="b3 box"></div>
+          <div class="b3 box">
+            <h2>Zeilen Tauschen</h2>
+            <input
+              v-model="bearbeiten.tauschen.zeilen.erste"
+              placeholder="zeile eintragen"
+              type="number" />
+            <input
+              v-model="bearbeiten.tauschen.zeilen.zweiete"
+              placeholder="zeile eintragen"
+              type="number" />
+            <button @click="zeilenTauschen">Tauschen</button>
+          </div>
           <div class="b4 box"></div>
         </div>
       </div>
@@ -95,6 +124,9 @@ this.$emit("data",this.bearbeiten.spalten)
 </template>
 
 <style scoped>
+form {
+  height: 100%;
+}
 #draggable-container {
   border-radius: 11px;
   position: absolute;
@@ -105,8 +137,9 @@ this.$emit("data",this.bearbeiten.spalten)
   height: 70rem;
 }
 #draggable-header {
-  z-index: 999;
+  z-index: 99;
   width: 1rem;
+  margin: 2px;
   background-color: var(--white);
 }
 .menü-rapper {
