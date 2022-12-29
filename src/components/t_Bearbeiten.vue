@@ -3,6 +3,7 @@ export default {
   name: "DraggableDiv",
   props: {
     TabellenGröße: Object,
+    open: Boolean,
   },
   data() {
     return {
@@ -12,15 +13,15 @@ export default {
           position: "Ü",
           anzahl: undefined,
         },
-        spalten: {},
+        spalten: { spalte: undefined, position: "L", anzahl: undefined },
         tauschen: {
           zeilen: {
             erste: undefined,
-            zweiete: undefined,
+            zweite: undefined,
           },
           spalten: {
             erste: undefined,
-            zweiete: undefined,
+            zweite: undefined,
           },
         },
       },
@@ -62,72 +63,122 @@ export default {
       document.onmouseup = null
       document.onmousemove = null
     },
-    getOption(e) {
+    getOptionZeile(e) {
       this.bearbeiten.zeilen.position = e.target.value
       console.log(this.bearbeiten.zeilen.position)
     },
-    einfügen() {
-      this.$emit("data", this.bearbeiten.zeilen)
+    getOptionspalte(e) {
+      this.bearbeiten.spalten.position = e.target.value
+      console.log(this.bearbeiten.spalten.position)
     },
   },
 }
 </script>
 <template>
-  <div
-    ref="draggableContainer"
-    id="draggable-container">
+  <Teleport to="#Tbearbeiten">
     <div
-      id="draggable-header"
-      @mousedown="dragMouseDown">
-      <slot name="header"><ion-icon name="keypad-outline"></ion-icon></slot>
-    </div>
-    <slot name="main">
-      <div class="menü-rapper">
-        <div class="section-rapper">
-          <div class="b1 box">
-            <h2>Zeilen Einfügen</h2>
-            <input
-              v-model="bearbeiten.zeilen.zeile"
-              placeholder="Welche zeile"
-              type="number" />
-            <select @change="getOption">
-              <option value="Ü">Über</option>
-              <option value="U">Unter</option>
-            </select>
-            <input
-              v-model="bearbeiten.zeilen.anzahl"
-              placeholder="Anzahl"
-              type="number" />
-            <button @click="einfügen">Einfügen</button>
-          </div>
-          <div class="b2 box"></div>
-        </div>
-        <div class="section-rapper se2">
-          <div class="b3 box">
-            <h2>Zeilen Tauschen</h2>
-            <input
-              v-model="bearbeiten.tauschen.zeilen.erste"
-              placeholder="zeile eintragen"
-              type="number" />
-            <input
-              v-model="bearbeiten.tauschen.zeilen.zweiete"
-              placeholder="zeile eintragen"
-              type="number" />
-            <button @click="zeilenTauschen">Tauschen</button>
-          </div>
-          <div class="b4 box"></div>
-        </div>
+      v-if="open"
+      ref="draggableContainer"
+      class="draggable-container">
+      <div
+        class="draggable-header"
+        @mousedown="dragMouseDown">
+        <slot name="header"><ion-icon name="keypad-outline"></ion-icon></slot>
       </div>
-    </slot>
-    <slot name="footer"></slot>
-  </div>
+      <slot name="main">
+        <div class="menü-rapper">
+          <div class="section-rapper">
+            <div class="b1 box">
+              <h2>Zeilen Einfügen</h2>
+              <input
+                v-model="bearbeiten.zeilen.zeile"
+                placeholder="Welche zeile"
+                type="number" />
+              <select @change="getOptionZeile">
+                <option value="Ü">Über</option>
+                <option value="U">Unter</option>
+              </select>
+              <input
+                v-model="bearbeiten.zeilen.anzahl"
+                placeholder="Anzahl"
+                type="number" />
+              <button @click="$emit('zeilenEinfügen', bearbeiten.zeilen)">
+                Einfügen
+              </button>
+            </div>
+            <div class="b2 box">
+              <h2>Spalten Einfügen</h2>
+              <input
+                v-model="bearbeiten.spalten.spalte"
+                placeholder="Welche spalte"
+                type="number" />
+              <select @change="getOptionspalte">
+                <option value="L">Links</option>
+                <option value="R">Rechts</option>
+              </select>
+              <input
+                v-model="bearbeiten.spalten.anzahl"
+                placeholder="Anzahl"
+                type="number" />
+              <button @click="$emit('spaltenEinfügen', bearbeiten.spalten)">
+                Einfügen
+              </button>
+            </div>
+          </div>
+          <div class="section-rapper se2">
+            <div class="b3 box">
+              <h2>Zeilen Tauschen</h2>
+              <input
+                v-model="bearbeiten.tauschen.zeilen.erste"
+                placeholder="zeile eintragen"
+                type="number" />
+              <input
+                v-model="bearbeiten.tauschen.zeilen.zweite"
+                placeholder="zeile eintragen"
+                type="number" />
+              <button
+                @click="$emit('zeilenTauschen', bearbeiten.tauschen.zeilen)">
+                Tauschen
+              </button>
+            </div>
+            <div class="b4 box">
+              <h2>Spalte Tauschen</h2>
+              <input
+                v-model="bearbeiten.tauschen.spalten.erste"
+                placeholder="zeile eintragen"
+                type="number" />
+              <input
+                v-model="bearbeiten.tauschen.spalten.zweite"
+                placeholder="zeile eintragen"
+                type="number" />
+              <button
+                @click="$emit('spaltenTauschen', bearbeiten.tauschen.spalten)">
+                Tauschen
+              </button>
+            </div>
+          </div>
+        </div>
+      </slot>
+      <slot name="footer"
+        ><button
+          class="btnclose"
+          @click="$emit('closeTabelBearbeiten')">
+          <ion-icon name="close-outline"></ion-icon></button
+      ></slot>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
-form {
-  height: 100%;
+.hidde {
+  display: none;
 }
-#draggable-container {
+.draggable-container {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  display: flex;
+  flex-direction: column;
   border-radius: 11px;
   position: absolute;
   z-index: 99;
@@ -136,7 +187,7 @@ form {
   width: 50rem;
   height: 70rem;
 }
-#draggable-header {
+.draggable-header {
   z-index: 99;
   width: 1rem;
   margin: 2px;
@@ -155,6 +206,7 @@ form {
 .se2 {
   border-top: 2px solid var(--black);
 }
+
 .b1,
 .b3 {
   border-right: 1px solid var(--black);
@@ -170,13 +222,16 @@ form {
   flex-direction: column;
   gap: 2.5rem;
   width: 50%;
-  padding: 5rem 1.5rem;
+  padding: 3rem 1.5rem;
 }
 
 ion-icon {
   padding: 2px;
   font-size: 25px;
   color: var(--black);
+}
+[name="close-outline"] {
+  color: #c92a2a;
 }
 input {
   background-color: var(--white);
@@ -198,5 +253,8 @@ button {
   border-radius: 11px;
   background-color: var(--white);
   font-size: 1.5rem;
+}
+.btnclose {
+  border-radius: 9px;
 }
 </style>

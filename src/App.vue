@@ -92,6 +92,7 @@ export default {
       tabelhidde: true,
       noTabelhidde: false,
       newTabelopen: ref(false),
+      Tbearbeiten:ref( false),
     }
   },
   methods: {
@@ -154,27 +155,27 @@ export default {
     },
     SaveLastZelle() {
       this.Tabelle.lastZelle.zeile = this.Tabelle.currentZelle.zeile
-      this.Tabelle.lastZelle.spalte = this.Tabelle.currentZelle.spalte
+      this.Tabelle.lastZelle.spalten = this.Tabelle.currentZelle.spalten
       this.Tabelle.lastZelle.zellenInhalt =
         this.Tabelle.currentZelle.zellenInhalt
       this.Tabelle.lastZelle.activ = this.Tabelle.currentZelle.activ
     },
     SetCurrentZelle(zeile, spalte, zelleninhalt) {
       this.Tabelle.currentZelle.zeile = zeile
-      this.Tabelle.currentZelle.spalte = spalte
+      this.Tabelle.currentZelle.spalten = spalte
       this.Tabelle.currentZelle.zellenInhalt = zelleninhalt
     },
     SetFocusedZelle() {
       this.Tabelle.data[this.Tabelle.currentZelle.zeile][
-        this.Tabelle.currentZelle.spalte
+        this.Tabelle.currentZelle.spalten
       ].activ = true
       this.Tabelle.data[this.Tabelle.lastZelle.zeile][
-        this.Tabelle.lastZelle.spalte
+        this.Tabelle.lastZelle.spalten
       ].activ = false
     },
     setZellenValue() {
       this.Tabelle.data[this.Tabelle.currentZelle.zeile][
-        this.Tabelle.currentZelle.spalte
+        this.Tabelle.currentZelle.spalten
       ].zellenInhalt = this.Tabelle.currentZelle.zellenInhalt
     },
 
@@ -303,7 +304,7 @@ export default {
       const zeile = []
 
       for (let i = 0; i < this.TabelenGröße.breite; i++) {
-        const zelle= new Zelle("")
+        const zelle = new Zelle("")
         zeile.push(zelle)
       }
       return zeile
@@ -316,27 +317,10 @@ export default {
       }
       return zeilen
     },
-    GenaratSpalte() {
-      for (let i = 0; i < this.TabelELAnzahl; i++) {
-        this.createSpalte()
-      }
-    },
-    createSpalte() {
-      const höhe = this.Tabelle.data.length
-      const breite = this.Tabelle.data[0].length
 
-      for (let i = 0; i < höhe; i++) {
-        const zelle = new Zelle(i, breite + 1)
-
-        this.Tabelle.data[i].push(zelle)
-      }
-    },
-
-    hinzufügen(zeile) {
+    zeilenEinfügen(zeile) {
       this.zeile = zeile
       console.log(this.zeile)
-
-      
 
       const zeilen = this.GeneratZeile()
 
@@ -345,8 +329,7 @@ export default {
         zeilen.forEach((zeile) => {
           this.Tabelle.data.unshift(zeile)
         })
-      }
-      if (
+      } else if (
         zeilePos == this.TabelenGröße.hohe - 1 &&
         this.zeile.position == "U"
       ) {
@@ -354,15 +337,15 @@ export default {
           this.Tabelle.data.push(zeile)
         })
       } else {
-        const Pos = this.getIsertIndex(zeilePos)
+        const Pos = this.getIsertIndexZeile(zeilePos)
         zeilen.forEach((zeile) => {
           this.Tabelle.data.splice(Pos, 0, zeile)
         })
       }
-       
+
       console.log(this.Tabelle.data)
     },
-    getIsertIndex(pos) {
+    getIsertIndexZeile(pos) {
       if (this.zeile.position == "Ü") {
         return pos
       } else {
@@ -370,13 +353,74 @@ export default {
         return newPos
       }
     },
+    zeilenTauschen(zeilen) {
+      let temp = []
+      this.Tabelle.data[zeilen.erste - 1].forEach((item, i) => {
+        temp.push(item.zellenInhalt)
+        item.zellenInhalt = this.Tabelle.data[zeilen.zweite - 1][i].zellenInhalt
+        this.Tabelle.data[zeilen.zweite - 1][i].zellenInhalt = temp[i]
+      })
+    },
+    spaltenEinfügen(spalte) {
+      console.log(spalte)
+      const zeilePos = spalte.spalte - 1
+      if (zeilePos == 0 && spalte.position == "L") {
+        for (let i = 0; i < spalte.anzahl; i++) {
+          this.Tabelle.data.forEach((zeilen, i) => {
+            const zelle = new Zelle("")
+            zeilen.unshift(zelle)
+          })
+        }
+      } else if (
+        zeilePos == this.TabelenGröße.breite - 1 &&
+        spalte.position == "R"
+      ) {
+        for (let i = 0; i < spalte.anzahl; i++) {
+          this.Tabelle.data.forEach((zeilen, i) => {
+            const zelle = new Zelle("")
+            zeilen.push(zelle)
+          })
+        }
+      } else {
+        const pos = this.getIsertIndexSpalte(zeilePos)
+        for (let i = 0; i < spalte.anzahl; i++) {
+          this.Tabelle.data.forEach((zeilen, i) => {
+            const zelle = new Zelle("")
+            zeilen.splice(pos, 0, zelle)
+          })
+        }
+      }
+    },
+    getIsertIndexSpalte(pos) {
+      if (this.spalte.position == "L") {
+        return pos
+      } else {
+        const newPos = pos + 1
+        return newPos
+      }
+    },
+    spaltenTauschen(spalten) {
+      let temp = []
+      this.Tabelle.data.forEach((zeile, i) => {
+        temp.push(zeile[spalten.erste - 1].zellenInhalt)
+        zeile[spalten.erste - 1].zellenInhalt =
+          zeile[spalten.zweite - 1].zellenInhalt
+        zeile[spalten.zweite - 1].zellenInhalt = temp[i]
+      })
+      console.log(temp)
+    },
   },
 }
 </script>
 
 <template>
   <bearbeiten
-    @data="hinzufügen"
+  :open="Tbearbeiten"
+    @zeilenEinfügen="zeilenEinfügen"
+    @zeilenTauschen="zeilenTauschen"
+    @spaltenEinfügen="spaltenEinfügen"
+    @spaltenTauschen="spaltenTauschen"
+    @closeTabelBearbeiten="Tbearbeiten = false"
     :TabellenGröße="TabelenGröße" />
   <newTabel
     :open="newTabelopen"
@@ -399,7 +443,7 @@ export default {
         {{ tabel.tname }}
       </option>
     </select>
-    <button class="btn-download">Tabelle Bearbeiten</button>
+    <button class="btn-download" @click="Tbearbeiten = true">Tabelle Bearbeiten</button>
     <button
       class="btn-download"
       @click="newTabelopen = true">
