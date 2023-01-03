@@ -1,72 +1,59 @@
 <script>
-class Zelle {
-  activ
-  constructor(zellenInhalt = "") {
-    this.zellenInhalt = zellenInhalt
-
-    this.activ = false
-  }
-}
-
-class Tabelle {
-  lastZelle = {
-    zeile: undefined,
-    spalten: undefined,
-    zellenInhalt: "",
-    activ: false,
-  }
-  currentZelle = {
-    zeile: undefined,
-    spalten: undefined,
-    zellenInhalt: "",
-    activ: false,
-  }
-  constructor(tname, data) {
-    this.tname = tname
-    this.data = data
-  }
-}
-
 export default {
   props: {
     open: Boolean,
+    classen: Object,
   },
   data() {
     return {
       newTabell: {
         Tname: "",
-        zeilen: 2,
-        spalten: 4,
+        zeilen: undefined,
+        spalten: undefined,
         data: [],
       },
+      invalidZeile: false,
+      invalidSpalte: false,
     }
   },
   methods: {
     tabellErstellen() {
-      this.createData()
-      const Tabel = this.createTabel()
-      this.$emit("NewTabel", Tabel)
+      if (this.newTabell.zeilen == 0) {
+        this.invalidZeile = true
+      } else {
+        this.invalidZeile = false
+      }
+
+      if (this.newTabell.spalten == 0) {
+        this.invalidSpalte = true
+      } else {
+        this.invalidSpalte = false
+      }
+
+      if (this.invalidZeile == false && this.invalidSpalte == false) {
+        this.createData()
+        const Tabel = this.createTabel()
+        this.$emit("NewTabel", Tabel)
+        this.newTabell.data = []
+      }
     },
     createTabel() {
-      const Tdata = []
-      this.newTabell.data.forEach((zeile) => {
-        const Tzeile = []
-        Tdata.push(Tzeile)
-        zeile.forEach((item) => {
-          const zelle = new Zelle(item)
-          Tzeile.push(zelle)
-        })
-      })
-      const Tabell = new Tabelle(this.newTabell.Tname, Tdata)
+      const Tabell = new this.classen.Tabel(
+        this.newTabell.Tname,
+        this.newTabell.data
+      )
       return Tabell
     },
     createData() {
-      const Zeile = Array(this.newTabell.spalten)
-      const zeile = Zeile.fill("", 0, this.newTabell.spalten)
-
-      for (let i = 0; i < this.newTabell.zeilen; i++) {
+      for (let i = 1; i <= this.newTabell.zeilen; i++) {
+        const zeile = []
         this.newTabell.data.push(zeile)
+        for (let I = 1; I <= this.newTabell.spalten; I++) {
+          const zelle = new this.classen.Zelle("")
+          zeile.push(zelle)
+        }
       }
+      console.log(this.newTabell.data)
     },
   },
 }
@@ -83,11 +70,15 @@ export default {
             v-model="newTabell.Tname"
             placeholder="Tabellen Name" />
           <input
-            class="new-Tabel-input"
+            :class="
+              invalidZeile ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
+            "
             v-model="newTabell.zeilen"
             placeholder="Anzahl der Zeilen" />
           <input
-            class="new-Tabel-input"
+            :class="
+              invalidSpalte ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
+            "
             v-model="newTabell.spalten"
             placeholder="Anzahl der spalten" />
         </div>
@@ -140,6 +131,12 @@ export default {
 .new-Tabel-input {
   background-color: var(--white);
   border: 2px solid var(--black);
+  font-size: 1.8rem;
+  padding: 0.5rem 0.5rem;
+}
+.new-Tabel-input-invalid {
+  background-color: var(--white);
+  border: 2px solid #c92a2a;
   font-size: 1.8rem;
   padding: 0.5rem 0.5rem;
 }

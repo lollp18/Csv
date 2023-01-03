@@ -8,44 +8,21 @@ import bearbeiten from "./components/t_Bearbeiten.vue"
 import { extend, isArray } from "@vue/shared"
 import { ref } from "vue"
 
-class Zelle {
-  activ
-  constructor(zellenInhalt = "") {
-    this.zellenInhalt = zellenInhalt
-
-    this.activ = false
-  }
-}
-
-class Tabelle {
-  lastZelle = {
-    zeile: undefined,
-    spalten: undefined,
-    zellenInhalt: "",
-    activ: false,
-  }
-  currentZelle = {
-    zeile: undefined,
-    spalten: undefined,
-    zellenInhalt: "",
-    activ: false,
-  }
-  constructor(tname, data) {
-    this.tname = tname
-    this.data = data
-  }
-}
-
 export default {
   async created() {
     await this.getTabels()
     this.HasTabels()
     this.setTabelSize()
+    this.seitenBerechnen()
+    this.seite.ende = this.Max
+    console.log(this.seite)
   },
   async updated() {
     await this.saveTabels()
     this.HasTabels()
     this.setTabelSize()
+    this.seitenBerechnen()
+    console.log(this.seite)
   },
   components: {
     btnDelet,
@@ -54,13 +31,67 @@ export default {
   },
   data() {
     return {
-      drag: false,
+      Zelle: class {
+        activ
+        constructor(zellenInhalt = "") {
+          this.zellenInhalt = zellenInhalt
+
+          this.activ = false
+        }
+      },
+      Tabel: class {
+        lastZelle = {
+          zeile: undefined,
+          spalten: undefined,
+          zellenInhalt: "",
+          activ: false,
+        }
+        currentZelle = {
+          zeile: undefined,
+          spalten: undefined,
+          zellenInhalt: "",
+          activ: false,
+        }
+        constructor(tname, data) {
+          this.tname = tname
+          this.data = data
+        }
+      },
+
       Tabelle: {
-        tname: "Plazhalter",
+        tname: "No Tabel",
         data: [
-          ["a", "b", "c", "d", "e", "f", "g", "h"],
-          ["a", "b", "c", "d", "e", "f", "g", "h"],
-          ["a", "b", "c", "d", "e", "f", "g", "h"],
+          [
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+          ],
+          [
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+          ],
+
+          [
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+            { activ: false, zellenInhalt: "" },
+          ],
         ],
         lastZelle: {
           zeile: undefined,
@@ -81,6 +112,14 @@ export default {
       },
       currentTabelle: [],
 
+      seiten: [],
+      Max: 21,
+      min: 0,
+      seite: {
+        Zahl: 1,
+        start: 0,
+        ende: undefined,
+      },
       TDownload: [],
       href: "",
       filename: "",
@@ -92,7 +131,9 @@ export default {
       tabelhidde: true,
       noTabelhidde: false,
       newTabelopen: ref(false),
-      Tbearbeiten:ref( false),
+      Tbearbeiten: ref(false),
+      btnSeitenLinks: false,
+      btnseitenRechts: true,
     }
   },
   methods: {
@@ -122,7 +163,7 @@ export default {
         const Tzeile = []
         Tdata.push(Tzeile)
         zeile.forEach((item) => {
-          const zelle = new Zelle(item)
+          const zelle = new this.Zelle(item)
           Tzeile.push(zelle)
         })
       })
@@ -130,7 +171,7 @@ export default {
     },
     createTabel(data) {
       const Tdata = this.cerateTabelldata(data.data)
-      const Tabell = new Tabelle(data.fileName, Tdata)
+      const Tabell = new this.Tabel(data.fileName, Tdata)
       return Tabell
     },
     async getData(e) {
@@ -367,7 +408,7 @@ export default {
       if (zeilePos == 0 && spalte.position == "L") {
         for (let i = 0; i < spalte.anzahl; i++) {
           this.Tabelle.data.forEach((zeilen, i) => {
-            const zelle = new Zelle("")
+            const zelle = new this.Zelle("")
             zeilen.unshift(zelle)
           })
         }
@@ -377,7 +418,7 @@ export default {
       ) {
         for (let i = 0; i < spalte.anzahl; i++) {
           this.Tabelle.data.forEach((zeilen, i) => {
-            const zelle = new Zelle("")
+            const zelle = new this.Zelle("")
             zeilen.push(zelle)
           })
         }
@@ -385,7 +426,7 @@ export default {
         const pos = this.getIsertIndexSpalte(zeilePos)
         for (let i = 0; i < spalte.anzahl; i++) {
           this.Tabelle.data.forEach((zeilen, i) => {
-            const zelle = new Zelle("")
+            const zelle = new this.Zelle("")
             zeilen.splice(pos, 0, zelle)
           })
         }
@@ -409,13 +450,64 @@ export default {
       })
       console.log(temp)
     },
+    seitenBerechnen() {
+      this.seiten = []
+      const seiteErste = {
+        Zahl: 1,
+        start: 0,
+        ende: this.Max,
+      }
+      this.seiten.push(seiteErste)
+      const seitenAnzahl = this.seitenAnzahl()
+
+      for (let i = 0; i < seitenAnzahl; i++) {
+        const seite = {
+          Zahl: this.seiten[i].Zahl + 1,
+          start: this.seiten[i].ende,
+          ende: this.seiten[i].ende + this.Max,
+        }
+        this.seiten.push(seite)
+      }
+      console.log(this.seiten)
+    },
+    seitenAnzahl() {
+      let TabellenGröße = this.TabelenGröße.breite,
+        seitenAnzahl = 1
+      while (TabellenGröße >= this.Max) {
+        seitenAnzahl++
+        let seiten = TabellenGröße - this.Max
+
+        TabellenGröße = seiten
+      }
+      return seitenAnzahl - 1
+    },
+    seiteZurück() {
+      this.seite = this.seiten[this.seite.Zahl - 2]
+      this.controlBtnSeiten()
+    },
+    seiteVor() {
+      this.seite = this.seiten[this.seite.Zahl]
+      this.controlBtnSeiten()
+    },
+    controlBtnSeiten() {
+      if (this.seite.Zahl == 1) {
+        this.btnSeitenLinks = false
+        this.btnseitenRechts = true
+      } else if (this.seite.Zahl == this.seiten.length) {
+        this.btnSeitenLinks = true
+        this.btnseitenRechts = false
+      } else {
+        this.btnSeitenLinks = true
+        this.btnseitenRechts = true
+      }
+    },
   },
 }
 </script>
 
 <template>
   <bearbeiten
-  :open="Tbearbeiten"
+    :open="Tbearbeiten"
     @zeilenEinfügen="zeilenEinfügen"
     @zeilenTauschen="zeilenTauschen"
     @spaltenEinfügen="spaltenEinfügen"
@@ -424,6 +516,7 @@ export default {
     :TabellenGröße="TabelenGröße" />
   <newTabel
     :open="newTabelopen"
+    :classen="{ Tabel, Zelle }"
     @close="newTabelopen = false"
     @NewTabel="insertTabel" />
 
@@ -443,7 +536,11 @@ export default {
         {{ tabel.tname }}
       </option>
     </select>
-    <button class="btn-download" @click="Tbearbeiten = true">Tabelle Bearbeiten</button>
+    <button
+      class="btn-download"
+      @click="Tbearbeiten = true">
+      Tabelle Bearbeiten
+    </button>
     <button
       class="btn-download"
       @click="newTabelopen = true">
@@ -470,112 +567,163 @@ export default {
       <span class="slider round"></span>
     </label>
   </header>
-  <div class="tabel-wraper">
-    <div :class="noTabelhidde ? 'hidde' : 'noTabel'">
-      <p class="noTabel-text">Hir Erscheinen ihre Tabelle</p>
-    </div>
-    <table :class="tabelhidde ? 'hidde' : ''">
-      <div class="tabel-info">
-        <input
-          class="tabel-name"
-          v-model="Tabelle.tname" />
-        <input
-          class="zellen-inhalt"
-          type="text"
-          @input="setZellenValue"
-          v-model="Tabelle.currentZelle.zellenInhalt" />
-      </div>
 
-      <tbody>
+  <div :class="noTabelhidde ? 'hidde' : 'noTabel'">
+    <p class="noTabel-text">Hir Erscheinen ihre Tabelle</p>
+  </div>
+  <table :class="tabelhidde ? 'hidde' : ''">
+    <div class="tabel-info">
+      <input
+        class="tabel-name"
+        v-model="Tabelle.tname" />
+      <input
+        class="zellen-inhalt"
+        type="text"
+        @input="setZellenValue"
+        v-model="Tabelle.currentZelle.zellenInhalt" />
+    </div>
+
+    <tbody>
+      <tr>
         <div class="rapperTop-btnDelet">
           <div class="zelle-placeholder"></div>
           <div class="zelle-placeholder"></div>
-          <btnDelet
-            v-for="(item, i) in Tabelle.data[0]"
-            @click="spalteLöschen(i)" />
-        </div>
-        <div class="rapperTop-btnDelet">
-          <div class="zelle-placeholder"></div>
-          <div class="zelle-placeholder"></div>
-          <div
-            class="zelle-nummer"
-            v-for="(item, i) in Tabelle.data[0]">
-            {{ i + 1 }}
+          <btnDelet @click="spalteLöschen(0)" />
+          <div v-for="(item, i) in Tabelle.data[0]">
+            <btnDelet
+              @click="spalteLöschen(i)"
+              v-if="i > 0 && i >= seite.start && i < seite.ende" />
           </div>
         </div>
-        <tr>
-          <td class="t-header">
-            <btnDelet @click="zeileLöschen(0)" />
-            <div class="zelle-nummer">1</div>
-            <div class="t-header">
+        <div class="rapperTop-btnDelet">
+          <div class="zelle-placeholder"></div>
+          <div class="zelle-placeholder"></div>
+          <div class="zelle-nummer">1</div>
+          <div v-for="(item, i) in Tabelle.data[0]">
+            <div
+              class="zelle-nummer"
+              v-if="i > 0 && i >= seite.start && i < seite.ende">
+              {{ i + 1 }}
+            </div>
+          </div>
+        </div>
+        <td class="t-header">
+          <btnDelet @click="zeileLöschen(0)" />
+          <div class="zelle-nummer">1</div>
+          <div class="t-header">
+            <div
+              :class="Tabelle.data[0][0].activ ? 'zelle-activ' : 'zelle'"
+              @click="getClickedItem(0, 0, Tabelle.data[0][0].zellenInhalt)">
+              {{ Tabelle.data[0][0].zellenInhalt }}
+            </div>
+            <div v-for="(item, i) in Tabelle.data[0]">
               <div
-                v-for="(item, i) in Tabelle.data[0]"
+                v-if="i > 0 && i >= seite.start && i < seite.ende"
                 :class="item.activ ? 'zelle-activ' : 'zelle'"
                 @click="getClickedItem(0, i, item.zellenInhalt)">
                 {{ item.zellenInhalt }}
               </div>
             </div>
-          </td>
-        </tr>
+          </div>
+        </td>
+      </tr>
 
-        <tr class="t-ab-raper">
-          <div>
+      <tr class="t-ab-raper">
+        <div>
+          <div
+            class="rapperSide-btnDelet"
+            v-for="(item, i) in Tabelle.data">
+            <btnDelet
+              v-if="Tabelle.data[i] != Tabelle.data[0]"
+              @click="zeileLöschen(i)" />
+          </div>
+        </div>
+        <div>
+          <div
+            class="rapperSide-btnDelet"
+            v-for="(item, i) in Tabelle.data">
             <div
-              class="rapperSide-btnDelet"
-              v-for="(item, i) in Tabelle.data">
-              <btnDelet
-                v-if="Tabelle.data[i] != Tabelle.data[0]"
-                @click="zeileLöschen(i)" />
+              class="zelle-nummer"
+              v-if="Tabelle.data[i] != Tabelle.data[0]">
+              {{ i + 1 }}
             </div>
           </div>
-          <div>
-            <div
-              class="rapperSide-btnDelet"
-              v-for="(item, i) in Tabelle.data">
-              <div
-                class="zelle-nummer"
-                v-if="Tabelle.data[i] != Tabelle.data[0]">
-                {{ i + 1 }}
-              </div>
-            </div>
-          </div>
-          <td class="t-aside">
-            <div v-for="(item, i) in Tabelle.data">
-              <div v-if="Tabelle.data[i] != Tabelle.data[0]">
-                <div v-for="(el, elI) in item">
-                  <div
-                    :class="el.activ ? 'zelle-activ' : 'zelle'"
-                    @click="getClickedItem(i, elI, el.zellenInhalt)"
-                    v-if="elI < 1">
-                    {{ el.zellenInhalt }}
-                  </div>
+        </div>
+        <td class="t-aside">
+          <div v-for="(item, i) in Tabelle.data">
+            <div v-if="Tabelle.data[i] != Tabelle.data[0]">
+              <div v-for="(el, elI) in item">
+                <div
+                  :class="el.activ ? 'zelle-activ' : 'zelle'"
+                  @click="getClickedItem(i, elI, el.zellenInhalt)"
+                  v-if="elI < 1">
+                  {{ el.zellenInhalt }}
                 </div>
               </div>
             </div>
-          </td>
-          <td class="t-body">
-            <div v-for="(item, i) in Tabelle.data">
-              <div
-                class="zeile"
-                v-if="Tabelle.data[i] != Tabelle.data[0]">
-                <div v-for="(el, elI) in item">
-                  <div
-                    :class="el.activ ? 'zelle-activ' : 'zelle'"
-                    @click="getClickedItem(i, elI, el.zellenInhalt)"
-                    v-if="elI > 0">
-                    {{ el.zellenInhalt }}
-                  </div>
+          </div>
+        </td>
+        <td class="t-body">
+          <div v-for="(item, i) in Tabelle.data">
+            <div
+              class="zeile"
+              v-if="Tabelle.data[i] != Tabelle.data[0]">
+              <div v-for="(el, elI) in item">
+                <div
+                  :class="el.activ ? 'zelle-activ' : 'zelle'"
+                  @click="getClickedItem(i, elI, el.zellenInhalt)"
+                  v-if="elI > 0 && elI >= seite.start && elI < seite.ende">
+                  {{ el.zellenInhalt }}
                 </div>
               </div>
             </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+    <div class="seiten-rapper">
+      <button
+        :class="btnSeitenLinks ? 'btn-seiten' : 'hidde'"
+        @click="seiteZurück()">
+        <ion-icon name="chevron-back-outline"></ion-icon>
+      </button>
+      <div class="btn-seiten zahl">
+        {{ seite.Zahl }}
+      </div>
+      <button
+        :class="btnseitenRechts ? 'btn-seiten' : 'hidde'"
+        @click="seiteVor()">
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </div>
+  </table>
 </template>
 
 <style>
+.zahl {
+  width: 2.5rem;
+}
+.seiten-rapper {
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+ion-icon {
+  padding: 2px;
+  font-size: 20px;
+  color: var(--black);
+}
+.btn-seiten {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--black);
+
+  border-radius: 50%;
+  background-color: var(--white);
+  font-size: 1.5rem;
+}
 header {
   display: flex;
   gap: 1rem;
@@ -680,8 +828,8 @@ input:checked + .slider:before {
   width: 90%;
 }
 .tabel-wraper {
-  display: flex;
   height: 100%;
+  width: 100vw;
 }
 .hidde {
   display: none;
@@ -698,6 +846,7 @@ input:checked + .slider:before {
 }
 .rapperTop-btnDelet {
   display: flex;
+  overflow: hidden;
 }
 .rapperSide-btnDelet {
   display: flex;
@@ -705,9 +854,11 @@ input:checked + .slider:before {
 }
 table {
   display: flex;
-  justify-content: center;
+
   flex-direction: column;
   border-collapse: collapse;
+  height: 100%;
+  width: 100vw;
   font-size: 10pt;
   padding: 0;
   margin: 0;
@@ -717,6 +868,7 @@ tbody {
 }
 .t-header {
   display: flex;
+  overflow: hidden;
 }
 .header-zeile {
   overflow: hidden;
@@ -730,6 +882,7 @@ tbody {
   display: flex;
   height: 70vh;
   overflow-y: scroll;
+  overflow-x: hidden;
 }
 .t-aside {
   display: flex;

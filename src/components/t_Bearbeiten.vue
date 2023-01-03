@@ -25,6 +25,28 @@ export default {
           },
         },
       },
+      check: {
+        zeile: {
+          einfügen: {
+            inputZeile: false,
+            anzahl: false,
+          },
+          tauschen: {
+            inputOben: false,
+            inputUnten: false,
+          },
+        },
+        spalten: {
+          einfügen: {
+            inputZeile: false,
+            anzahl: false,
+          },
+          tauschen: {
+            inputOben: false,
+            inputUnten: false,
+          },
+        },
+      },
 
       positions: {
         clientX: undefined,
@@ -71,6 +93,29 @@ export default {
       this.bearbeiten.spalten.position = e.target.value
       console.log(this.bearbeiten.spalten.position)
     },
+    zeilenEinfügen() {
+      if (
+        this.bearbeiten.zeilen.zeile == 0 ||
+        this.bearbeiten.zeilen.zeile > this.TabellenGröße.hohe
+      ) {
+        this.check.zeile.einfügen.inputZeile = true
+      } else {
+        this.check.zeile.einfügen.inputZeile = false
+      }
+
+      if (this.bearbeiten.zeilen.zeile == 0) {
+        this.check.zeile.einfügen.anzahl = true
+      } else {
+        this.check.zeile.einfügen.anzahl = false
+      }
+
+      if (
+        this.check.zeile.einfügen.inputZeile == false &&
+        this.check.zeile.einfügen.anzahl == false
+      ) {
+        this.$emit("zeilenEinfügen", bearbeiten.zeilen)
+      }
+    },
   },
 }
 </script>
@@ -91,6 +136,7 @@ export default {
             <div class="b1 box">
               <h2>Zeilen Einfügen</h2>
               <input
+                :class="check.zeile.einfügen.inputZeile ? 'invalid' : ''"
                 v-model="bearbeiten.zeilen.zeile"
                 placeholder="Welche zeile"
                 type="number" />
@@ -99,16 +145,16 @@ export default {
                 <option value="U">Unter</option>
               </select>
               <input
+                :class="check.zeile.einfügen.anzahl ? 'invalid' : ''"
                 v-model="bearbeiten.zeilen.anzahl"
                 placeholder="Anzahl"
                 type="number" />
-              <button @click="$emit('zeilenEinfügen', bearbeiten.zeilen)">
-                Einfügen
-              </button>
+              <button @click="zeilenEinfügen()">Einfügen</button>
             </div>
             <div class="b2 box">
               <h2>Spalten Einfügen</h2>
               <input
+                :class="check.spalten.einfügen.inputZeile ? 'invalid' : ''"
                 v-model="bearbeiten.spalten.spalte"
                 placeholder="Welche spalte"
                 type="number" />
@@ -117,6 +163,7 @@ export default {
                 <option value="R">Rechts</option>
               </select>
               <input
+                :class="check.spalten.einfügen.anzahl ? 'invalid' : ''"
                 v-model="bearbeiten.spalten.anzahl"
                 placeholder="Anzahl"
                 type="number" />
@@ -129,10 +176,12 @@ export default {
             <div class="b3 box">
               <h2>Zeilen Tauschen</h2>
               <input
+                :class="check.zeile.tauschen.inputOben ? 'invalid' : ''"
                 v-model="bearbeiten.tauschen.zeilen.erste"
                 placeholder="zeile eintragen"
                 type="number" />
               <input
+                :class="check.zeile.tauschen.inputUnten ? 'invalid' : ''"
                 v-model="bearbeiten.tauschen.zeilen.zweite"
                 placeholder="zeile eintragen"
                 type="number" />
@@ -144,10 +193,12 @@ export default {
             <div class="b4 box">
               <h2>Spalte Tauschen</h2>
               <input
+                :class="check.spalten.tauschen.inputOben ? 'invalid' : ''"
                 v-model="bearbeiten.tauschen.spalten.erste"
                 placeholder="zeile eintragen"
                 type="number" />
               <input
+                :class="check.spalten.tauschen.inputUnten ? 'invalid' : ''"
                 v-model="bearbeiten.tauschen.spalten.zweite"
                 placeholder="zeile eintragen"
                 type="number" />
@@ -176,7 +227,7 @@ export default {
 .draggable-container {
   top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   border-radius: 11px;
@@ -239,6 +290,9 @@ input {
   border-radius: 11px;
   font-size: 1.5rem;
   padding: 0.5rem 0.5rem;
+}
+.invalid {
+  border: 2px solid #c92a2a;
 }
 select {
   background-color: var(--white);
