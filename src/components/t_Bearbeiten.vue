@@ -1,6 +1,7 @@
 <script>
 export default {
-  name: "DraggableDiv",
+  name: "draggableContainer",
+
   props: {
     TabellenGröße: Object,
     open: Boolean,
@@ -9,11 +10,11 @@ export default {
     return {
       bearbeiten: {
         zeilen: {
-          zeile: undefined,
+          zeilen: undefined,
           position: "Ü",
           anzahl: undefined,
         },
-        spalten: { spalte: undefined, position: "L", anzahl: undefined },
+        spalten: { spalten: undefined, position: "L", anzahl: undefined },
         tauschen: {
           zeilen: {
             erste: undefined,
@@ -56,6 +57,7 @@ export default {
       },
     }
   },
+
   methods: {
     dragMouseDown(event) {
       event.preventDefault()
@@ -85,6 +87,7 @@ export default {
       document.onmouseup = null
       document.onmousemove = null
     },
+
     getOptionZeile(e) {
       this.bearbeiten.zeilen.position = e.target.value
       console.log(this.bearbeiten.zeilen.position)
@@ -95,15 +98,15 @@ export default {
     },
     zeilenEinfügen() {
       if (
-        this.bearbeiten.zeilen.zeile == 0 ||
-        this.bearbeiten.zeilen.zeile > this.TabellenGröße.hohe
+        this.bearbeiten.zeilen.zeilen <= 0 ||
+        this.bearbeiten.zeilen.zeilen > this.TabellenGröße.hohe
       ) {
         this.check.zeile.einfügen.inputZeile = true
       } else {
         this.check.zeile.einfügen.inputZeile = false
       }
 
-      if (this.bearbeiten.zeilen.zeile == 0) {
+      if (this.bearbeiten.zeilen.anzahl <= 0) {
         this.check.zeile.einfügen.anzahl = true
       } else {
         this.check.zeile.einfügen.anzahl = false
@@ -113,7 +116,76 @@ export default {
         this.check.zeile.einfügen.inputZeile == false &&
         this.check.zeile.einfügen.anzahl == false
       ) {
-        this.$emit("zeilenEinfügen", bearbeiten.zeilen)
+        this.$emit("zeilenEinfügen", this.bearbeiten.zeilen)
+      }
+    },
+    zeilenTauschen() {
+      if (
+        this.bearbeiten.tauschen.zeilen.erste <= 0 ||
+        this.bearbeiten.tauschen.zeilen.erste > this.TabellenGröße.hohe
+      ) {
+        this.check.zeile.tauschen.inputOben = true
+      } else {
+        this.check.zeile.tauschen.inputOben = false
+      }
+      if (
+        this.bearbeiten.tauschen.zeilen.zweite <= 0 ||
+        this.bearbeiten.tauschen.zeilen.zweite > this.TabellenGröße.hohe
+      ) {
+        this.check.zeile.tauschen.inputUnten = true
+      } else {
+        this.check.zeile.tauschen.inputUnten = false
+      }
+      if (
+        this.check.zeile.tauschen.inputOben == false ||
+        this.check.zeile.tauschen.inputUnten == false
+      ) {
+        this.$emit("zeilenTauschen", this.bearbeiten.tauschen.zeilen)
+      }
+    },
+    spaltenEinfügen() {
+      if (
+        this.bearbeiten.spalten.spalten <= 0 ||
+        this.bearbeiten.spalten.spalten > this.TabellenGröße.breite
+      ) {
+        this.check.spalten.einfügen.inputZeile = true
+      } else {
+        this.check.spalten.einfügen.inputZeile = false
+      }
+      if (this.bearbeiten.spalten.anzahl <= 0) {
+        this.check.spalten.einfügen.anzahl = true
+      } else {
+        this.check.spalten.einfügen.anzahl = false
+      }
+      if (
+        this.check.spalten.einfügen.inputZeile == false &&
+        this.check.spalten.einfügen.anzahl == false
+      ) {
+        this.$emit("spaltenEinfügen", this.bearbeiten.spalten)
+      }
+    },
+    spaltenTauschen() {
+      if (
+        this.bearbeiten.tauschen.spalten.erste <= 0 ||
+        this.bearbeiten.tauschen.spalten.erste > this.TabellenGröße.hohe
+      ) {
+        this.check.spalten.tauschen.inputOben = true
+      } else {
+        this.check.spalten.tauschen.inputOben = false
+      }
+      if (
+        this.bearbeiten.tauschen.spalten.zweite <= 0 ||
+        this.bearbeiten.tauschen.spalten.zweite > this.TabellenGröße.hohe
+      ) {
+        this.check.spalten.tauschen.inputUnten = true
+      } else {
+        this.check.spalten.tauschen.inputUnten = false
+      }
+      if (
+        this.check.spalten.tauschen.inputOben == false ||
+        this.check.spalten.tauschen.inputUnten == false
+      ) {
+        this.$emit("spaltenTauschen", this.bearbeiten.tauschen.spalten)
       }
     },
   },
@@ -121,106 +193,110 @@ export default {
 </script>
 <template>
   <Teleport to="#Tbearbeiten">
-    <div
-      v-if="open"
-      ref="draggableContainer"
-      class="draggable-container">
+    <Transition>
       <div
-        class="draggable-header"
-        @mousedown="dragMouseDown">
-        <slot name="header"><ion-icon name="keypad-outline"></ion-icon></slot>
-      </div>
-      <slot name="main">
-        <div class="menü-rapper">
-          <div class="section-rapper">
-            <div class="b1 box">
-              <h2>Zeilen Einfügen</h2>
-              <input
-                :class="check.zeile.einfügen.inputZeile ? 'invalid' : ''"
-                v-model="bearbeiten.zeilen.zeile"
-                placeholder="Welche zeile"
-                type="number" />
-              <select @change="getOptionZeile">
-                <option value="Ü">Über</option>
-                <option value="U">Unter</option>
-              </select>
-              <input
-                :class="check.zeile.einfügen.anzahl ? 'invalid' : ''"
-                v-model="bearbeiten.zeilen.anzahl"
-                placeholder="Anzahl"
-                type="number" />
-              <button @click="zeilenEinfügen()">Einfügen</button>
-            </div>
-            <div class="b2 box">
-              <h2>Spalten Einfügen</h2>
-              <input
-                :class="check.spalten.einfügen.inputZeile ? 'invalid' : ''"
-                v-model="bearbeiten.spalten.spalte"
-                placeholder="Welche spalte"
-                type="number" />
-              <select @change="getOptionspalte">
-                <option value="L">Links</option>
-                <option value="R">Rechts</option>
-              </select>
-              <input
-                :class="check.spalten.einfügen.anzahl ? 'invalid' : ''"
-                v-model="bearbeiten.spalten.anzahl"
-                placeholder="Anzahl"
-                type="number" />
-              <button @click="$emit('spaltenEinfügen', bearbeiten.spalten)">
-                Einfügen
-              </button>
-            </div>
-          </div>
-          <div class="section-rapper se2">
-            <div class="b3 box">
-              <h2>Zeilen Tauschen</h2>
-              <input
-                :class="check.zeile.tauschen.inputOben ? 'invalid' : ''"
-                v-model="bearbeiten.tauschen.zeilen.erste"
-                placeholder="zeile eintragen"
-                type="number" />
-              <input
-                :class="check.zeile.tauschen.inputUnten ? 'invalid' : ''"
-                v-model="bearbeiten.tauschen.zeilen.zweite"
-                placeholder="zeile eintragen"
-                type="number" />
-              <button
-                @click="$emit('zeilenTauschen', bearbeiten.tauschen.zeilen)">
-                Tauschen
-              </button>
-            </div>
-            <div class="b4 box">
-              <h2>Spalte Tauschen</h2>
-              <input
-                :class="check.spalten.tauschen.inputOben ? 'invalid' : ''"
-                v-model="bearbeiten.tauschen.spalten.erste"
-                placeholder="zeile eintragen"
-                type="number" />
-              <input
-                :class="check.spalten.tauschen.inputUnten ? 'invalid' : ''"
-                v-model="bearbeiten.tauschen.spalten.zweite"
-                placeholder="zeile eintragen"
-                type="number" />
-              <button
-                @click="$emit('spaltenTauschen', bearbeiten.tauschen.spalten)">
-                Tauschen
-              </button>
-            </div>
-          </div>
+        v-if="open"
+        ref="draggableContainer"
+        class="draggable-container">
+        <div
+          class="draggable-header"
+          @mousedown="dragMouseDown">
+          <slot name="header"><ion-icon name="keypad-outline"></ion-icon></slot>
         </div>
-      </slot>
-      <slot name="footer"
-        ><button
-          class="btnclose"
-          @click="$emit('closeTabelBearbeiten')">
-          <ion-icon name="close-outline"></ion-icon></button
-      ></slot>
-    </div>
+        <slot name="main">
+          <div class="menü-rapper">
+            <div class="section-rapper">
+              <div class="b1 box">
+                <h2>Zeilen Einfügen</h2>
+                <input
+                  :class="check.zeile.einfügen.inputZeile ? 'invalid' : ''"
+                  v-model="bearbeiten.zeilen.zeilen"
+                  placeholder="Welche zeile"
+                  type="number" />
+                <select @change="getOptionZeile">
+                  <option value="Ü">Über</option>
+                  <option value="U">Unter</option>
+                </select>
+                <input
+                  :class="check.zeile.einfügen.anzahl ? 'invalid' : ''"
+                  v-model="bearbeiten.zeilen.anzahl"
+                  placeholder="Anzahl"
+                  type="number" />
+                <button @click="zeilenEinfügen()">Einfügen</button>
+              </div>
+              <div class="b2 box">
+                <h2>Spalten Einfügen</h2>
+                <input
+                  :class="check.spalten.einfügen.inputZeile ? 'invalid' : ''"
+                  v-model="bearbeiten.spalten.spalten"
+                  placeholder="Welche spalte"
+                  type="number" />
+                <select @change="getOptionspalte">
+                  <option value="L">Links</option>
+                  <option value="R">Rechts</option>
+                </select>
+                <input
+                  :class="check.spalten.einfügen.anzahl ? 'invalid' : ''"
+                  v-model="bearbeiten.spalten.anzahl"
+                  placeholder="Anzahl"
+                  type="number" />
+                <button @click="spaltenEinfügen()">Einfügen</button>
+              </div>
+            </div>
+            <div class="section-rapper se2">
+              <div class="b3 box">
+                <h2>Zeilen Tauschen</h2>
+                <input
+                  :class="check.zeile.tauschen.inputOben ? 'invalid' : ''"
+                  v-model="bearbeiten.tauschen.zeilen.erste"
+                  placeholder="zeile eintragen"
+                  type="number" />
+                <input
+                  :class="check.zeile.tauschen.inputUnten ? 'invalid' : ''"
+                  v-model="bearbeiten.tauschen.zeilen.zweite"
+                  placeholder="zeile eintragen"
+                  type="number" />
+                <button @click="zeilenTauschen">Tauschen</button>
+              </div>
+              <div class="b4 box">
+                <h2>Spalte Tauschen</h2>
+                <input
+                  :class="check.spalten.tauschen.inputOben ? 'invalid' : ''"
+                  v-model="bearbeiten.tauschen.spalten.erste"
+                  placeholder="zeile eintragen"
+                  type="number" />
+                <input
+                  :class="check.spalten.tauschen.inputUnten ? 'invalid' : ''"
+                  v-model="bearbeiten.tauschen.spalten.zweite"
+                  placeholder="zeile eintragen"
+                  type="number" />
+                <button @click="spaltenTauschen">Tauschen</button>
+              </div>
+            </div>
+          </div>
+        </slot>
+        <slot name="footer"
+          ><button
+            class="btnclose"
+            @click="$emit('closeTabelBearbeiten')">
+            <ion-icon name="close-outline"></ion-icon></button
+        ></slot>
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
 <style scoped>
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+  transform: scale(1.1);
+}
 .hidde {
   display: none;
 }

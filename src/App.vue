@@ -4,7 +4,7 @@ import papa from "papaparse"
 import btnDelet from "./components/t_btnDelet.vue"
 import newTabel from "./components/t_newTabel.vue"
 import bearbeiten from "./components/t_Bearbeiten.vue"
-
+import ZellenTauschen from "./components/t_ZellenTauschen.vue"
 import { extend, isArray } from "@vue/shared"
 import { ref } from "vue"
 
@@ -28,6 +28,7 @@ export default {
     btnDelet,
     newTabel,
     bearbeiten,
+    ZellenTauschen,
   },
   data() {
     return {
@@ -132,93 +133,13 @@ export default {
       noTabelhidde: false,
       newTabelopen: ref(false),
       Tbearbeiten: ref(false),
+      ZellenTauschen: ref(false),
       btnSeitenLinks: false,
       btnseitenRechts: true,
     }
   },
   methods: {
-    HasTabels() {
-      if (this.currentTabelle.length == 0) {
-        this.tabelhidde = true
-        this.noTabelhidde = false
-      } else {
-        this.tabelhidde = false
-        this.noTabelhidde = true
-      }
-    },
-    async getFile(e) {
-      const data = await this.getData(e)
-
-      const tabelle = this.createTabel(data)
-
-      this.currentTabelle.push(tabelle)
-
-      this.Tabelle = tabelle
-
-      console.log(this.currentTabelle)
-    },
-    cerateTabelldata(data) {
-      const Tdata = []
-      data.forEach((zeile) => {
-        const Tzeile = []
-        Tdata.push(Tzeile)
-        zeile.forEach((item) => {
-          const zelle = new this.Zelle(item)
-          Tzeile.push(zelle)
-        })
-      })
-      return Tdata
-    },
-    createTabel(data) {
-      const Tdata = this.cerateTabelldata(data.data)
-      const Tabell = new this.Tabel(data.fileName, Tdata)
-      return Tabell
-    },
-    async getData(e) {
-      const [file] = await e.target.files
-      const fileName = this.FormatFilename(file.name)
-      const content = await file.text()
-
-      const datas = papa.parse(content)
-      const data = datas.data
-
-      return {
-        fileName,
-        data,
-      }
-    },
-    getClickedItem(zeile, spalte, zelleninhalt) {
-      this.SaveLastZelle()
-
-      this.SetCurrentZelle(zeile, spalte, zelleninhalt)
-
-      this.SetFocusedZelle()
-    },
-    SaveLastZelle() {
-      this.Tabelle.lastZelle.zeile = this.Tabelle.currentZelle.zeile
-      this.Tabelle.lastZelle.spalten = this.Tabelle.currentZelle.spalten
-      this.Tabelle.lastZelle.zellenInhalt =
-        this.Tabelle.currentZelle.zellenInhalt
-      this.Tabelle.lastZelle.activ = this.Tabelle.currentZelle.activ
-    },
-    SetCurrentZelle(zeile, spalte, zelleninhalt) {
-      this.Tabelle.currentZelle.zeile = zeile
-      this.Tabelle.currentZelle.spalten = spalte
-      this.Tabelle.currentZelle.zellenInhalt = zelleninhalt
-    },
-    SetFocusedZelle() {
-      this.Tabelle.data[this.Tabelle.currentZelle.zeile][
-        this.Tabelle.currentZelle.spalten
-      ].activ = true
-      this.Tabelle.data[this.Tabelle.lastZelle.zeile][
-        this.Tabelle.lastZelle.spalten
-      ].activ = false
-    },
-    setZellenValue() {
-      this.Tabelle.data[this.Tabelle.currentZelle.zeile][
-        this.Tabelle.currentZelle.spalten
-      ].zellenInhalt = this.Tabelle.currentZelle.zellenInhalt
-    },
+    // requests
 
     async saveTabels() {
       try {
@@ -255,61 +176,6 @@ export default {
         console.log(e.message)
       }
     },
-    getSelectTabel(e) {
-      this.selectTabelId = e.target.value
-      console.log(this.selectTabelId)
-      this.Tabelle = this.currentTabelle[this.selectTabelId]
-      console.log(this.Tabelle)
-    },
-    getTabelOption(e) {
-      this.Tabelle = this.currentTabelle[this.selectTabelId]
-    },
-    FormatFilename(fileName) {
-      const newFilename = fileName.slice(0, -4)
-      return newFilename
-    },
-    downlodFile() {
-      const data = this.FormatData()
-      const csv = papa.unparse(data)
-      console.log(csv)
-      this.href = `data:text/csv;charset=utf-8,${csv}`
-      this.filename = this.Tabelle.tname
-    },
-    FormatData() {
-      const Tdata = []
-      this.Tabelle.data.forEach((item) => {
-        const zeilen = []
-
-        Tdata.push(zeilen)
-        item.forEach((item) => {
-          const e = Object.entries(item).flat()
-          const a = e[3]
-          zeilen.push(a)
-        })
-      })
-      return Tdata
-    },
-
-    darkMode() {
-      document.body.classList.add("darkMode")
-    },
-    spalteLöschen(i) {
-      this.Tabelle.data.forEach((zeile) => {
-        zeile.splice(i, 1)
-      })
-      console.log(this.Tabelle.data)
-    },
-    zeileLöschen(i) {
-      this.Tabelle.data.splice(i, 1)
-      console.log(this.Tabelle.data)
-    },
-    async DeletTabel() {
-      await this.Delettabel()
-
-      await this.getTabels()
-      this.HasTabels()
-      console.log(this.currentTabelle)
-    },
     async Delettabel() {
       try {
         const TabelleInfo = {
@@ -329,35 +195,67 @@ export default {
         console.log(e.message)
       }
     },
-    insertTabel(tabelle) {
-      this.newTabelopen = false
-      this.currentTabelle.unshift(tabelle)
+
+    // Uploade File
+
+    async getFile(e) {
+      const data = await this.getData(e)
+
+      const tabelle = this.createTabel(data)
+
+      this.currentTabelle.push(tabelle)
+
       this.Tabelle = tabelle
+
+      console.log(this.currentTabelle)
     },
 
-    setTabelSize() {
-      this.TabelenGröße.hohe = this.Tabelle.data.length
-      this.TabelenGröße.breite = this.Tabelle.data[0].length
-    },
-    createZeile() {
-      this.setTabelSize()
+    async getData(e) {
+      const [file] = await e.target.files
+      const fileName = this.FormatFilename(file.name)
+      const content = await file.text()
 
-      const zeile = []
+      const datas = papa.parse(content)
+      const data = datas.data
 
-      for (let i = 0; i < this.TabelenGröße.breite; i++) {
-        const zelle = new Zelle("")
-        zeile.push(zelle)
+      return {
+        fileName,
+        data,
       }
-      return zeile
     },
-    GeneratZeile() {
-      const zeilen = []
-      for (let i = 0; i < this.zeile.anzahl; i++) {
-        const zeile = this.createZeile()
-        zeilen.push(zeile)
-      }
-      return zeilen
+    FormatFilename(fileName) {
+      const newFilename = fileName.slice(0, -4)
+      return newFilename
     },
+    createTabel(data) {
+      const Tdata = this.cerateTabelldata(data.data)
+      const Tabell = new this.Tabel(data.fileName, Tdata)
+      return Tabell
+    },
+    cerateTabelldata(data) {
+      const Tdata = []
+      data.forEach((zeile) => {
+        const Tzeile = []
+        Tdata.push(Tzeile)
+        zeile.forEach((item) => {
+          const zelle = new this.Zelle(item)
+          Tzeile.push(zelle)
+        })
+      })
+      return Tdata
+    },
+    // Tabel Select
+
+    getSelectTabel(e) {
+      this.selectTabelId = e.target.value
+      console.log(this.selectTabelId)
+      this.Tabelle = this.currentTabelle[this.selectTabelId]
+      console.log(this.Tabelle)
+    },
+
+    //Tabelle bearbeiten
+
+    //Zeilen bearbeiten
 
     zeilenEinfügen(zeile) {
       this.zeile = zeile
@@ -365,7 +263,7 @@ export default {
 
       const zeilen = this.GeneratZeile()
 
-      const zeilePos = this.zeile.zeile - 1
+      const zeilePos = this.zeile.zeilen - 1
       if (zeilePos == 0 && this.zeile.position == "Ü") {
         zeilen.forEach((zeile) => {
           this.Tabelle.data.unshift(zeile)
@@ -386,6 +284,27 @@ export default {
 
       console.log(this.Tabelle.data)
     },
+
+    createZeile() {
+      this.setTabelSize()
+
+      const zeile = []
+
+      for (let i = 0; i < this.TabelenGröße.breite; i++) {
+        const zelle = new this.Zelle("")
+        zeile.push(zelle)
+      }
+      return zeile
+    },
+    GeneratZeile() {
+      const zeilen = []
+      for (let i = 0; i < this.zeile.anzahl; i++) {
+        const zeile = this.createZeile()
+        zeilen.push(zeile)
+      }
+      return zeilen
+    },
+
     getIsertIndexZeile(pos) {
       if (this.zeile.position == "Ü") {
         return pos
@@ -402,9 +321,12 @@ export default {
         this.Tabelle.data[zeilen.zweite - 1][i].zellenInhalt = temp[i]
       })
     },
+
+    //Spalten bearbeiten
+
     spaltenEinfügen(spalte) {
       console.log(spalte)
-      const zeilePos = spalte.spalte - 1
+      const zeilePos = spalte.spalten - 1
       if (zeilePos == 0 && spalte.position == "L") {
         for (let i = 0; i < spalte.anzahl; i++) {
           this.Tabelle.data.forEach((zeilen, i) => {
@@ -450,6 +372,96 @@ export default {
       })
       console.log(temp)
     },
+
+    // Neue Tabelle erstellen
+
+    insertTabel(tabelle) {
+      this.newTabelopen = false
+      this.currentTabelle.unshift(tabelle)
+      this.Tabelle = tabelle
+    },
+
+    // Download File
+
+    downlodFile() {
+      const data = this.FormatData()
+      const csv = papa.unparse(data)
+      console.log(csv)
+      this.href = `data:text/csv;charset=utf-8,${csv}`
+      this.filename = this.Tabelle.tname
+    },
+    FormatData() {
+      const Tdata = []
+      this.Tabelle.data.forEach((item) => {
+        const zeilen = []
+
+        Tdata.push(zeilen)
+        item.forEach((item) => {
+          const Zellen = Object.entries(item).flat()
+          const zellenInhalt = Zellen[3]
+          zeilen.push(zellenInhalt)
+        })
+      })
+      return Tdata
+    },
+
+    // Tabelle löschen
+
+    async DeletTabel() {
+      await this.Delettabel()
+
+      await this.getTabels()
+      this.HasTabels()
+      console.log(this.currentTabelle)
+    },
+    spalteLöschen(i) {
+      this.Tabelle.data.forEach((zeile) => {
+        zeile.splice(i, 1)
+      })
+      console.log(this.Tabelle.data)
+    },
+    zeileLöschen(i) {
+      this.Tabelle.data.splice(i, 1)
+      console.log(this.Tabelle.data)
+    },
+
+    // Zellen bearbeiten
+
+    getClickedItem(zeile, spalte, zelleninhalt) {
+      this.SaveLastZelle()
+
+      this.SetCurrentZelle(zeile, spalte, zelleninhalt)
+
+      this.SetFocusedZelle()
+    },
+    SaveLastZelle() {
+      this.Tabelle.lastZelle.zeile = this.Tabelle.currentZelle.zeile
+      this.Tabelle.lastZelle.spalten = this.Tabelle.currentZelle.spalten
+      this.Tabelle.lastZelle.zellenInhalt =
+        this.Tabelle.currentZelle.zellenInhalt
+      this.Tabelle.lastZelle.activ = this.Tabelle.currentZelle.activ
+    },
+    SetCurrentZelle(zeile, spalte, zelleninhalt) {
+      this.Tabelle.currentZelle.zeile = zeile
+      this.Tabelle.currentZelle.spalten = spalte
+      this.Tabelle.currentZelle.zellenInhalt = zelleninhalt
+    },
+    SetFocusedZelle() {
+      this.Tabelle.data[this.Tabelle.currentZelle.zeile][
+        this.Tabelle.currentZelle.spalten
+      ].activ = true
+      this.Tabelle.data[this.Tabelle.lastZelle.zeile][
+        this.Tabelle.lastZelle.spalten
+      ].activ = false
+    },
+    setZellenValue() {
+      this.Tabelle.data[this.Tabelle.currentZelle.zeile][
+        this.Tabelle.currentZelle.spalten
+      ].zellenInhalt = this.Tabelle.currentZelle.zellenInhalt
+    },
+
+    // Seiten erstellen
+
     seitenBerechnen() {
       this.seiten = []
       const seiteErste = {
@@ -481,14 +493,9 @@ export default {
       }
       return seitenAnzahl - 1
     },
-    seiteZurück() {
-      this.seite = this.seiten[this.seite.Zahl - 2]
-      this.controlBtnSeiten()
-    },
-    seiteVor() {
-      this.seite = this.seiten[this.seite.Zahl]
-      this.controlBtnSeiten()
-    },
+
+    //Seiten wechseln
+
     controlBtnSeiten() {
       if (this.seite.Zahl == 1) {
         this.btnSeitenLinks = false
@@ -501,6 +508,34 @@ export default {
         this.btnseitenRechts = true
       }
     },
+    seiteZurück() {
+      this.seite = this.seiten[this.seite.Zahl - 2]
+      this.controlBtnSeiten()
+    },
+    seiteVor() {
+      this.seite = this.seiten[this.seite.Zahl]
+      this.controlBtnSeiten()
+    },
+
+    // check and set
+
+    HasTabels() {
+      if (this.currentTabelle.length == 0) {
+        this.tabelhidde = true
+        this.noTabelhidde = false
+      } else {
+        this.tabelhidde = false
+        this.noTabelhidde = true
+      }
+    },
+
+    setTabelSize() {
+      this.TabelenGröße.hohe = this.Tabelle.data.length
+      this.TabelenGröße.breite = this.Tabelle.data[0].length
+    },
+    darkMode() {
+      document.body.classList.add("darkMode")
+    },
   },
 }
 </script>
@@ -508,9 +543,9 @@ export default {
 <template>
   <bearbeiten
     :open="Tbearbeiten"
-    @zeilenEinfügen="zeilenEinfügen"
+    @zeilenEinfügen="zeilenEinfügen($event)"
     @zeilenTauschen="zeilenTauschen"
-    @spaltenEinfügen="spaltenEinfügen"
+    @spaltenEinfügen="spaltenEinfügen($event)"
     @spaltenTauschen="spaltenTauschen"
     @closeTabelBearbeiten="Tbearbeiten = false"
     :TabellenGröße="TabelenGröße" />
@@ -519,7 +554,9 @@ export default {
     :classen="{ Tabel, Zelle }"
     @close="newTabelopen = false"
     @NewTabel="insertTabel" />
-
+  <ZellenTauschen
+    :open="ZellenTauschen"
+    @closeZellenTauschen="ZellenTauschen = false" />
   <header>
     <input
       class="file-input"
@@ -543,10 +580,14 @@ export default {
     </button>
     <button
       class="btn-download"
+      @click="ZellenTauschen = true">
+      Zellen Tauschen
+    </button>
+    <button
+      class="btn-download"
       @click="newTabelopen = true">
       Neue Tabelle erstellen
     </button>
-
     <a
       class="btn-download"
       @click="downlodFile"

@@ -14,23 +14,34 @@ export default {
       },
       invalidZeile: false,
       invalidSpalte: false,
+      invalidName: false,
     }
   },
   methods: {
     tabellErstellen() {
-      if (this.newTabell.zeilen == 0) {
+      if (this.newTabell.Tname == "") {
+        this.invalidName = true
+      } else {
+        this.invalidName = false
+      }
+
+      if (this.newTabell.zeilen <= 0) {
         this.invalidZeile = true
       } else {
         this.invalidZeile = false
       }
 
-      if (this.newTabell.spalten == 0) {
+      if (this.newTabell.spalten <= 0) {
         this.invalidSpalte = true
       } else {
         this.invalidSpalte = false
       }
 
-      if (this.invalidZeile == false && this.invalidSpalte == false) {
+      if (
+        this.invalidZeile == false &&
+        this.invalidSpalte == false &&
+        this.invalidName == false
+      ) {
         this.createData()
         const Tabel = this.createTabel()
         this.$emit("NewTabel", Tabel)
@@ -60,45 +71,59 @@ export default {
 </script>
 <template>
   <Teleport to="#new-Tabel">
-    <div
-      class="new-Tabel-bg"
-      v-if="open">
-      <div class="new-Tabel">
-        <div class="new-Tabel-Input-rapper">
-          <input
-            class="new-Tabel-input"
-            v-model="newTabell.Tname"
-            placeholder="Tabellen Name" />
-          <input
-            :class="
-              invalidZeile ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
-            "
-            v-model="newTabell.zeilen"
-            placeholder="Anzahl der Zeilen" />
-          <input
-            :class="
-              invalidSpalte ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
-            "
-            v-model="newTabell.spalten"
-            placeholder="Anzahl der spalten" />
-        </div>
-        <div class="new-Tabel-btnRapper">
-          <button
-            @click="tabellErstellen"
-            class="btn-download font">
-            Tabelle Generiren
-          </button>
-          <button
-            @click="$emit('close')"
-            class="btn-download font">
-            Abrechen
-          </button>
+    <Transition>
+      <div
+        class="new-Tabel-bg"
+        v-if="open">
+        <div class="new-Tabel">
+          <div class="new-Tabel-Input-rapper">
+            <input
+              :class="
+                invalidName ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
+              "
+              v-model="newTabell.Tname"
+              placeholder="Tabellen Name" />
+            <input
+              :class="
+                invalidZeile ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
+              "
+              v-model="newTabell.zeilen"
+              placeholder="Anzahl der Zeilen" />
+            <input
+              :class="
+                invalidSpalte ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
+              "
+              v-model="newTabell.spalten"
+              placeholder="Anzahl der spalten" />
+          </div>
+          <div class="new-Tabel-btnRapper">
+            <button
+              @click="tabellErstellen"
+              class="btn-download font">
+              Tabelle Generiren
+            </button>
+            <button
+              @click="$emit('close')"
+              class="btn-download font">
+              Abrechen
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 <style scoped>
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+  transform: scale(1.1);
+}
 .new-Tabel-bg {
   position: fixed;
   display: flex;
