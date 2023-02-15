@@ -1,17 +1,22 @@
 <script>
+import { mapFields } from "vuex-map-fields"
+
+import { Zelle, Tabel } from "./Classes"
 export default {
   props: {
     open: Boolean,
-    classen: Object,
+  },
+  computed: {
+    ...mapFields({
+      NewTabellName: "newTabell.name",
+
+      NewTabellZeile: "newTabell.zeilen",
+
+      NewTabellSpalte: "newTabell.spalten",
+    }),
   },
   data() {
     return {
-      newTabell: {
-        Tname: "",
-        zeilen: undefined,
-        spalten: undefined,
-        data: [],
-      },
       invalidZeile: false,
       invalidSpalte: false,
       invalidName: false,
@@ -19,19 +24,30 @@ export default {
   },
   methods: {
     tabellErstellen() {
-      if (this.newTabell.Tname == "") {
+      this.$store.commit("ChecknewTabellName")
+
+      if (
+        this.$store.getters.NewTabellName == "" ||
+        this.$store.getters.CheckTabellName == true
+      ) {
         this.invalidName = true
       } else {
         this.invalidName = false
       }
 
-      if (this.newTabell.zeilen <= 0) {
+      if (
+        this.$store.getters.NewTabellZeile <= 0 ||
+        this.$store.getters.NewTabellZeile == undefined
+      ) {
         this.invalidZeile = true
       } else {
         this.invalidZeile = false
       }
 
-      if (this.newTabell.spalten <= 0) {
+      if (
+        this.$store.getters.NewTabellSpalte <= 0 ||
+        this.$store.getters.NewTabellSpalte == undefined
+      ) {
         this.invalidSpalte = true
       } else {
         this.invalidSpalte = false
@@ -42,29 +58,10 @@ export default {
         this.invalidSpalte == false &&
         this.invalidName == false
       ) {
-        this.createData()
-        const Tabel = this.createTabel()
-        this.$emit("NewTabel", Tabel)
-        this.newTabell.data = []
+        this.$store.commit("CreateNewTabellData")
+        this.$store.commit("InserteNewTabellTabel")
+        this.$emit("close")
       }
-    },
-    createTabel() {
-      const Tabell = new this.classen.Tabel(
-        this.newTabell.Tname,
-        this.newTabell.data
-      )
-      return Tabell
-    },
-    createData() {
-      for (let i = 1; i <= this.newTabell.zeilen; i++) {
-        const zeile = []
-        this.newTabell.data.push(zeile)
-        for (let I = 1; I <= this.newTabell.spalten; I++) {
-          const zelle = new this.classen.Zelle("")
-          zeile.push(zelle)
-        }
-      }
-      console.log(this.newTabell.data)
     },
   },
 }
@@ -81,19 +78,19 @@ export default {
               :class="
                 invalidName ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
               "
-              v-model="newTabell.Tname"
+              v-model="NewTabellName"
               placeholder="Tabellen Name" />
             <input
               :class="
                 invalidZeile ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
               "
-              v-model="newTabell.zeilen"
+              v-model="NewTabellZeile"
               placeholder="Anzahl der Zeilen" />
             <input
               :class="
                 invalidSpalte ? 'new-Tabel-input-invalid' : 'new-Tabel-input'
               "
-              v-model="newTabell.spalten"
+              v-model="NewTabellSpalte"
               placeholder="Anzahl der spalten" />
           </div>
           <div class="new-Tabel-btnRapper">
@@ -139,8 +136,8 @@ export default {
   position: relative;
   display: flex;
   flex-direction: column;
-  background-color: var(--white);
-  border: 2px solid var(--black);
+  background-color: var(--MainColor);
+  border: 2px solid var(--SecondaryColor);
   gap: 3rem;
   padding: 4rem 4rem;
   height: 40rem;
@@ -154,13 +151,13 @@ export default {
   gap: 1.5rem;
 }
 .new-Tabel-input {
-  background-color: var(--white);
-  border: 2px solid var(--black);
+  background-color: var(--MainColor);
+  border: 2px solid var(--SecondaryColor);
   font-size: 1.8rem;
   padding: 0.5rem 0.5rem;
 }
 .new-Tabel-input-invalid {
-  background-color: var(--white);
+  background-color: var(--MainColor);
   border: 2px solid #c92a2a;
   font-size: 1.8rem;
   padding: 0.5rem 0.5rem;

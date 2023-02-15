@@ -1,526 +1,116 @@
 <script>
-import "./assets/main.css"
-import papa from "papaparse"
+// Librarys
+
+import { mapFields } from "vuex-map-fields"
+
+// Compnents
+
 import btnDelet from "./components/t_btnDelet.vue"
 import newTabel from "./components/t_newTabel.vue"
 import bearbeiten from "./components/t_Bearbeiten.vue"
 import ZellenTauschen from "./components/t_ZellenTauschen.vue"
-import { extend, isArray } from "@vue/shared"
+
+// Others
+
 import { ref } from "vue"
 
 export default {
   async created() {
-    await this.getTabels()
+    await this.$store.dispatch("GetTabels")
     this.HasTabels()
-    this.setTabelSize()
-    this.seitenBerechnen()
-    this.seite.ende = this.Max
-    console.log(this.seite)
   },
   async updated() {
-    await this.saveTabels()
-    this.HasTabels()
-    this.setTabelSize()
-    this.seitenBerechnen()
-    console.log(this.seite)
+    await this.$nextTick(async () => {
+      await this.$store.dispatch("SaveTabels")
+      this.HasTabels()
+      this.$store.commit("InitSeitenBerechnen")
+    })
   },
+  mounted() {
+    this.$store.commit("InitSeitenBerechnen")
+
+    this.$store.commit("SetCurrentSeiteFirst")
+    window.addEventListener("resize", () => {
+      this.$store.commit("ResizeWindow")
+    })
+    this.$store.commit("SetFileInput", this.$refs.fileInput)
+  },
+  unmounted() {
+    window.removeEventListener("resize")
+  },
+
   components: {
     btnDelet,
     newTabel,
     bearbeiten,
     ZellenTauschen,
   },
+  computed: {
+    ...mapFields({
+      CurrentTabelName: "currentTabelle.TabelName",
+      CurrentZelleninhalt: "currentTabelle.currentZelle.zellenInhalt",
+    }),
+  },
   data() {
     return {
-      Zelle: class {
-        activ
-        constructor(zellenInhalt = "") {
-          this.zellenInhalt = zellenInhalt
-
-          this.activ = false
-        }
-      },
-      Tabel: class {
-        lastZelle = {
-          zeile: undefined,
-          spalten: undefined,
-          zellenInhalt: "",
-          activ: false,
-        }
-        currentZelle = {
-          zeile: undefined,
-          spalten: undefined,
-          zellenInhalt: "",
-          activ: false,
-        }
-        constructor(tname, data) {
-          this.tname = tname
-          this.data = data
-        }
-      },
-
-      Tabelle: {
-        tname: "No Tabel",
-        data: [
-          [
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-          ],
-          [
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-          ],
-
-          [
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-            { activ: false, zellenInhalt: "" },
-          ],
-        ],
-        lastZelle: {
-          zeile: undefined,
-          spalten: undefined,
-          zellenInhalt: "",
-          activ: false,
-        },
-        currentZelle: {
-          zeile: undefined,
-          spalten: undefined,
-          zellenInhalt: "",
-          activ: false,
-        },
-      },
-      TabelenGröße: {
-        hohe: 0,
-        breite: 0,
-      },
-      currentTabelle: [],
-
-      seiten: [],
-      Max: 21,
-      min: 0,
-      seite: {
-        Zahl: 1,
-        start: 0,
-        ende: undefined,
-      },
-      TDownload: [],
-      href: "",
-      filename: "",
       darkMode: false,
-      SelektetEL: "zeile",
-      zeile: {},
-      spalte: {},
-      apiURL: "http://localhost/",
+
       tabelhidde: true,
       noTabelhidde: false,
       newTabelopen: ref(false),
       Tbearbeiten: ref(false),
       ZellenTauschen: ref(false),
-      btnSeitenLinks: false,
-      btnseitenRechts: true,
     }
   },
   methods: {
-    // requests
+    async DeletTabel() {
+      if (this.$store.getters.UploadFilename == this.$store.getters.TabelName) {
+        this.ResteFile()
 
-    async saveTabels() {
-      try {
-        const tabels = this.currentTabelle
-        const json = JSON.stringify(tabels)
-
-        const optons = {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: json,
-        }
-
-        const res = await fetch(this.apiURL, optons)
-        console.log(res, "post")
-      } catch (error) {
-        console.log(e.message)
+        await this.$store.dispatch("InitDelet")
+      } else {
+        await this.$store.dispatch("InitDelet")
       }
     },
-    async getTabels() {
-      try {
-        const res = await fetch(this.apiURL)
-        const data = await res.json()
-        console.log(data)
 
-        if (data.length == 0) {
-          this.currentTabelle = data
-          this.tabelhidde = true
-          this.noTabelhidde = false
-        } else {
-          this.currentTabelle = data
-          this.Tabelle = this.currentTabelle[0]
-        }
-      } catch (e) {
-        console.log(e.message)
-      }
-    },
-    async Delettabel() {
-      try {
-        const TabelleInfo = {
-          id: this.selectTabelId,
-        }
-        const json = JSON.stringify(TabelleInfo)
-
-        const optons = {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: json,
-        }
-
-        const res = await fetch(this.apiURL, optons)
-        console.log(res)
-      } catch (e) {
-        console.log(e.message)
-      }
+    getSelectTabel(e) {
+      this.$store.commit("getSelectTabel", e)
     },
 
     // Uploade File
 
     async getFile(e) {
-      const data = await this.getData(e)
+      await this.$store.dispatch("GetData", e)
 
-      const tabelle = this.createTabel(data)
-
-      this.currentTabelle.push(tabelle)
-
-      this.Tabelle = tabelle
-
-      console.log(this.currentTabelle)
-    },
-
-    async getData(e) {
-      const [file] = await e.target.files
-      const fileName = this.FormatFilename(file.name)
-      const content = await file.text()
-
-      const datas = papa.parse(content)
-      const data = datas.data
-
-      return {
-        fileName,
-        data,
-      }
-    },
-    FormatFilename(fileName) {
-      const newFilename = fileName.slice(0, -4)
-      return newFilename
-    },
-    createTabel(data) {
-      const Tdata = this.cerateTabelldata(data.data)
-      const Tabell = new this.Tabel(data.fileName, Tdata)
-      return Tabell
-    },
-    cerateTabelldata(data) {
-      const Tdata = []
-      data.forEach((zeile) => {
-        const Tzeile = []
-        Tdata.push(Tzeile)
-        zeile.forEach((item) => {
-          const zelle = new this.Zelle(item)
-          Tzeile.push(zelle)
-        })
-      })
-      return Tdata
-    },
-    // Tabel Select
-
-    getSelectTabel(e) {
-      this.selectTabelId = e.target.value
-      console.log(this.selectTabelId)
-      this.Tabelle = this.currentTabelle[this.selectTabelId]
-      console.log(this.Tabelle)
-    },
-
-    //Tabelle bearbeiten
-
-    //Zeilen bearbeiten
-
-    zeilenEinfügen(zeile) {
-      this.zeile = zeile
-      console.log(this.zeile)
-
-      const zeilen = this.GeneratZeile()
-
-      const zeilePos = this.zeile.zeilen - 1
-      if (zeilePos == 0 && this.zeile.position == "Ü") {
-        zeilen.forEach((zeile) => {
-          this.Tabelle.data.unshift(zeile)
-        })
-      } else if (
-        zeilePos == this.TabelenGröße.hohe - 1 &&
-        this.zeile.position == "U"
-      ) {
-        zeilen.forEach((zeile) => {
-          this.Tabelle.data.push(zeile)
-        })
-      } else {
-        const Pos = this.getIsertIndexZeile(zeilePos)
-        zeilen.forEach((zeile) => {
-          this.Tabelle.data.splice(Pos, 0, zeile)
-        })
-      }
-
-      console.log(this.Tabelle.data)
-    },
-
-    createZeile() {
-      this.setTabelSize()
-
-      const zeile = []
-
-      for (let i = 0; i < this.TabelenGröße.breite; i++) {
-        const zelle = new this.Zelle("")
-        zeile.push(zelle)
-      }
-      return zeile
-    },
-    GeneratZeile() {
-      const zeilen = []
-      for (let i = 0; i < this.zeile.anzahl; i++) {
-        const zeile = this.createZeile()
-        zeilen.push(zeile)
-      }
-      return zeilen
-    },
-
-    getIsertIndexZeile(pos) {
-      if (this.zeile.position == "Ü") {
-        return pos
-      } else {
-        const newPos = pos + 1
-        return newPos
-      }
-    },
-    zeilenTauschen(zeilen) {
-      let temp = []
-      this.Tabelle.data[zeilen.erste - 1].forEach((item, i) => {
-        temp.push(item.zellenInhalt)
-        item.zellenInhalt = this.Tabelle.data[zeilen.zweite - 1][i].zellenInhalt
-        this.Tabelle.data[zeilen.zweite - 1][i].zellenInhalt = temp[i]
-      })
-    },
-
-    //Spalten bearbeiten
-
-    spaltenEinfügen(spalte) {
-      console.log(spalte)
-      const zeilePos = spalte.spalten - 1
-      if (zeilePos == 0 && spalte.position == "L") {
-        for (let i = 0; i < spalte.anzahl; i++) {
-          this.Tabelle.data.forEach((zeilen, i) => {
-            const zelle = new this.Zelle("")
-            zeilen.unshift(zelle)
-          })
-        }
-      } else if (
-        zeilePos == this.TabelenGröße.breite - 1 &&
-        spalte.position == "R"
-      ) {
-        for (let i = 0; i < spalte.anzahl; i++) {
-          this.Tabelle.data.forEach((zeilen, i) => {
-            const zelle = new this.Zelle("")
-            zeilen.push(zelle)
-          })
-        }
-      } else {
-        const pos = this.getIsertIndexSpalte(zeilePos)
-        for (let i = 0; i < spalte.anzahl; i++) {
-          this.Tabelle.data.forEach((zeilen, i) => {
-            const zelle = new this.Zelle("")
-            zeilen.splice(pos, 0, zelle)
-          })
-        }
-      }
-    },
-    getIsertIndexSpalte(pos) {
-      if (this.spalte.position == "L") {
-        return pos
-      } else {
-        const newPos = pos + 1
-        return newPos
-      }
-    },
-    spaltenTauschen(spalten) {
-      let temp = []
-      this.Tabelle.data.forEach((zeile, i) => {
-        temp.push(zeile[spalten.erste - 1].zellenInhalt)
-        zeile[spalten.erste - 1].zellenInhalt =
-          zeile[spalten.zweite - 1].zellenInhalt
-        zeile[spalten.zweite - 1].zellenInhalt = temp[i]
-      })
-      console.log(temp)
-    },
-
-    // Neue Tabelle erstellen
-
-    insertTabel(tabelle) {
-      this.newTabelopen = false
-      this.currentTabelle.unshift(tabelle)
-      this.Tabelle = tabelle
-    },
-
-    // Download File
-
-    downlodFile() {
-      const data = this.FormatData()
-      const csv = papa.unparse(data)
-      console.log(csv)
-      this.href = `data:text/csv;charset=utf-8,${csv}`
-      this.filename = this.Tabelle.tname
-    },
-    FormatData() {
-      const Tdata = []
-      this.Tabelle.data.forEach((item) => {
-        const zeilen = []
-
-        Tdata.push(zeilen)
-        item.forEach((item) => {
-          const Zellen = Object.entries(item).flat()
-          const zellenInhalt = Zellen[3]
-          zeilen.push(zellenInhalt)
-        })
-      })
-      return Tdata
-    },
-
-    // Tabelle löschen
-
-    async DeletTabel() {
-      await this.Delettabel()
-
-      await this.getTabels()
-      this.HasTabels()
-      console.log(this.currentTabelle)
-    },
-    spalteLöschen(i) {
-      this.Tabelle.data.forEach((zeile) => {
-        zeile.splice(i, 1)
-      })
-      console.log(this.Tabelle.data)
-    },
-    zeileLöschen(i) {
-      this.Tabelle.data.splice(i, 1)
-      console.log(this.Tabelle.data)
+      this.$store.commit("CreateTabel")
     },
 
     // Zellen bearbeiten
 
     getClickedItem(zeile, spalte, zelleninhalt) {
-      this.SaveLastZelle()
-
-      this.SetCurrentZelle(zeile, spalte, zelleninhalt)
-
-      this.SetFocusedZelle()
-    },
-    SaveLastZelle() {
-      this.Tabelle.lastZelle.zeile = this.Tabelle.currentZelle.zeile
-      this.Tabelle.lastZelle.spalten = this.Tabelle.currentZelle.spalten
-      this.Tabelle.lastZelle.zellenInhalt =
-        this.Tabelle.currentZelle.zellenInhalt
-      this.Tabelle.lastZelle.activ = this.Tabelle.currentZelle.activ
-    },
-    SetCurrentZelle(zeile, spalte, zelleninhalt) {
-      this.Tabelle.currentZelle.zeile = zeile
-      this.Tabelle.currentZelle.spalten = spalte
-      this.Tabelle.currentZelle.zellenInhalt = zelleninhalt
-    },
-    SetFocusedZelle() {
-      this.Tabelle.data[this.Tabelle.currentZelle.zeile][
-        this.Tabelle.currentZelle.spalten
-      ].activ = true
-      this.Tabelle.data[this.Tabelle.lastZelle.zeile][
-        this.Tabelle.lastZelle.spalten
-      ].activ = false
-    },
-    setZellenValue() {
-      this.Tabelle.data[this.Tabelle.currentZelle.zeile][
-        this.Tabelle.currentZelle.spalten
-      ].zellenInhalt = this.Tabelle.currentZelle.zellenInhalt
-    },
-
-    // Seiten erstellen
-
-    seitenBerechnen() {
-      this.seiten = []
-      const seiteErste = {
-        Zahl: 1,
-        start: 0,
-        ende: this.Max,
+      const SelectetZelle = {
+        zeile,
+        spalte,
+        zelleninhalt,
       }
-      this.seiten.push(seiteErste)
-      const seitenAnzahl = this.seitenAnzahl()
 
-      for (let i = 0; i < seitenAnzahl; i++) {
-        const seite = {
-          Zahl: this.seiten[i].Zahl + 1,
-          start: this.seiten[i].ende,
-          ende: this.seiten[i].ende + this.Max,
-        }
-        this.seiten.push(seite)
-      }
-      console.log(this.seiten)
-    },
-    seitenAnzahl() {
-      let TabellenGröße = this.TabelenGröße.breite,
-        seitenAnzahl = 1
-      while (TabellenGröße >= this.Max) {
-        seitenAnzahl++
-        let seiten = TabellenGröße - this.Max
-
-        TabellenGröße = seiten
-      }
-      return seitenAnzahl - 1
+      this.$store.commit("InitZelleBerarbeiten", SelectetZelle)
     },
 
-    //Seiten wechseln
+    // Ghost Zellen
 
-    controlBtnSeiten() {
-      if (this.seite.Zahl == 1) {
-        this.btnSeitenLinks = false
-        this.btnseitenRechts = true
-      } else if (this.seite.Zahl == this.seiten.length) {
-        this.btnSeitenLinks = true
-        this.btnseitenRechts = false
-      } else {
-        this.btnSeitenLinks = true
-        this.btnseitenRechts = true
-      }
-    },
-    seiteZurück() {
-      this.seite = this.seiten[this.seite.Zahl - 2]
-      this.controlBtnSeiten()
-    },
-    seiteVor() {
-      this.seite = this.seiten[this.seite.Zahl]
-      this.controlBtnSeiten()
+    creatGhostZeile() {
+      createElement("div")
     },
 
     // check and set
 
+    ResteFile() {
+      this.$refs.fileInput.value = null
+    },
+
     HasTabels() {
-      if (this.currentTabelle.length == 0) {
+      if (this.$store.getters.currentTabellesLength == 0) {
         this.tabelhidde = true
         this.noTabelhidde = false
       } else {
@@ -529,10 +119,6 @@ export default {
       }
     },
 
-    setTabelSize() {
-      this.TabelenGröße.hohe = this.Tabelle.data.length
-      this.TabelenGröße.breite = this.Tabelle.data[0].length
-    },
     darkMode() {
       document.body.classList.add("darkMode")
     },
@@ -543,17 +129,10 @@ export default {
 <template>
   <bearbeiten
     :open="Tbearbeiten"
-    @zeilenEinfügen="zeilenEinfügen($event)"
-    @zeilenTauschen="zeilenTauschen"
-    @spaltenEinfügen="spaltenEinfügen($event)"
-    @spaltenTauschen="spaltenTauschen"
-    @closeTabelBearbeiten="Tbearbeiten = false"
-    :TabellenGröße="TabelenGröße" />
+    @closeTabelBearbeiten="Tbearbeiten = false" />
   <newTabel
     :open="newTabelopen"
-    :classen="{ Tabel, Zelle }"
-    @close="newTabelopen = false"
-    @NewTabel="insertTabel" />
+    @close="newTabelopen = false" />
   <ZellenTauschen
     :open="ZellenTauschen"
     @closeZellenTauschen="ZellenTauschen = false" />
@@ -561,16 +140,17 @@ export default {
     <input
       class="file-input"
       type="file"
+      ref="fileInput"
       @change="getFile"
       accept=".csv" />
     <select
       class="auswahl-container"
       @change="getSelectTabel">
       <option
-        v-for="(tabel, i) in currentTabelle"
+        v-for="(tabel, i) in $store.getters.currentTabelles"
         :key="i"
         :value="i">
-        {{ tabel.tname }}
+        {{ tabel.TabelName }}
       </option>
     </select>
     <button
@@ -590,9 +170,9 @@ export default {
     </button>
     <a
       class="btn-download"
-      @click="downlodFile"
-      :href="href"
-      :download="filename"
+      @click="$store.commit('downlodFile')"
+      :href="$store.getters.href"
+      :download="TabelName"
       >Download</a
     >
     <button
@@ -616,105 +196,156 @@ export default {
     <div class="tabel-info">
       <input
         class="tabel-name"
-        v-model="Tabelle.tname" />
+        @input="$store.commit('SetCurrentTabelName')"
+        v-model="CurrentTabelName" />
       <input
         class="zellen-inhalt"
         type="text"
-        @input="setZellenValue"
-        v-model="Tabelle.currentZelle.zellenInhalt" />
+        @input="$store.commit('SetZellenValue')"
+        v-model="CurrentZelleninhalt" />
     </div>
 
     <tbody>
       <tr>
+        <!-- Tabel Header BTN Delet -->
         <div class="rapperTop-btnDelet">
           <div class="zelle-placeholder"></div>
           <div class="zelle-placeholder"></div>
-          <btnDelet @click="spalteLöschen(0)" />
-          <div v-for="(item, i) in Tabelle.data[0]">
+          <btnDelet @click="$store.commit('spalteLöschen', 0)" />
+          <div
+            v-for="i in $store.getters.currentTabelleFirstZeile.length - 1"
+            :key="i">
             <btnDelet
-              @click="spalteLöschen(i)"
-              v-if="i > 0 && i >= seite.start && i < seite.ende" />
+              @click="$store.commit('spalteLöschen', i)"
+              v-if="
+                i > 0 &&
+                i >= $store.getters.CurrentSeiteStart &&
+                i <= $store.getters.CurrentSeiteEnde
+              " />
           </div>
         </div>
+        <!-- Tabel Header Spalten Nummern -->
         <div class="rapperTop-btnDelet">
           <div class="zelle-placeholder"></div>
           <div class="zelle-placeholder"></div>
           <div class="zelle-nummer">1</div>
-          <div v-for="(item, i) in Tabelle.data[0]">
+          <div
+            v-for="i in $store.getters.currentTabelleFirstZeile.length - 1"
+            :key="i">
             <div
               class="zelle-nummer"
-              v-if="i > 0 && i >= seite.start && i < seite.ende">
+              v-if="
+                i > 0 &&
+                i >= $store.getters.CurrentSeiteStart &&
+                i <= $store.getters.CurrentSeiteEnde
+              ">
               {{ i + 1 }}
             </div>
           </div>
         </div>
+        <!-- Tabel Header Data -->
         <td class="t-header">
-          <btnDelet @click="zeileLöschen(0)" />
+          <btnDelet @click="$store.commit('zeileLöschen', 0)" />
           <div class="zelle-nummer">1</div>
           <div class="t-header">
             <div
-              :class="Tabelle.data[0][0].activ ? 'zelle-activ' : 'zelle'"
-              @click="getClickedItem(0, 0, Tabelle.data[0][0].zellenInhalt)">
-              {{ Tabelle.data[0][0].zellenInhalt }}
+              ref="zelle"
+              :class="
+                $store.getters.currentTabelleFirstZelle.activ
+                  ? 'zelle-activ'
+                  : 'zelle'
+              "
+              @click="
+                getClickedItem(
+                  0,
+                  0,
+                  $store.getters.currentTabelleFirstZelle.zellenInhalt
+                )
+              ">
+              {{ $store.getters.currentTabelleFirstZelle.zellenInhalt }}
             </div>
-            <div v-for="(item, i) in Tabelle.data[0]">
+            <div
+              v-for="(Zelle, i) in $store.getters.currentTabelleFirstZeile"
+              :key="i">
               <div
-                v-if="i > 0 && i >= seite.start && i < seite.ende"
-                :class="item.activ ? 'zelle-activ' : 'zelle'"
-                @click="getClickedItem(0, i, item.zellenInhalt)">
-                {{ item.zellenInhalt }}
+                v-if="
+                  i > 0 &&
+                  i >= $store.getters.CurrentSeiteStart &&
+                  i <= $store.getters.CurrentSeiteEnde
+                "
+                :class="Zelle.activ ? 'zelle-activ' : 'zelle'"
+                @click="getClickedItem(0, i, Zelle.zellenInhalt)">
+                {{ Zelle.zellenInhalt }}
               </div>
             </div>
           </div>
         </td>
       </tr>
-
+      <!-- Tabel Seitenleiste -->
       <tr class="t-ab-raper">
+        <!-- Tabel Seitenleiste BTN Delet -->
         <div>
           <div
             class="rapperSide-btnDelet"
-            v-for="(item, i) in Tabelle.data">
+            v-for="i in $store.getters.currentTabelleData.length - 1"
+            :key="i">
             <btnDelet
-              v-if="Tabelle.data[i] != Tabelle.data[0]"
-              @click="zeileLöschen(i)" />
+              v-if="i != 0"
+              @click="$store.commit('zeileLöschen', i)" />
           </div>
         </div>
+        <!-- Tabel Seitenleiste Zeilen Nummern -->
         <div>
           <div
             class="rapperSide-btnDelet"
-            v-for="(item, i) in Tabelle.data">
+            v-for="i in $store.getters.currentTabelleData.length - 1"
+            :key="i">
             <div
               class="zelle-nummer"
-              v-if="Tabelle.data[i] != Tabelle.data[0]">
+              v-if="i != 0">
               {{ i + 1 }}
             </div>
           </div>
         </div>
+        <!-- Tabel Seitenleiste  Data-->
         <td class="t-aside">
-          <div v-for="(item, i) in Tabelle.data">
-            <div v-if="Tabelle.data[i] != Tabelle.data[0]">
-              <div v-for="(el, elI) in item">
+          <div
+            v-for="(Zeile, i) in $store.getters.currentTabelleData"
+            :key="i">
+            <div v-if="i != 0">
+              <div
+                v-for="(Zelle, I) in Zeile"
+                :key="I">
                 <div
-                  :class="el.activ ? 'zelle-activ' : 'zelle'"
-                  @click="getClickedItem(i, elI, el.zellenInhalt)"
-                  v-if="elI < 1">
-                  {{ el.zellenInhalt }}
+                  :class="Zelle.activ ? 'zelle-activ' : 'zelle'"
+                  @click="getClickedItem(i, I, Zelle.zellenInhalt)"
+                  v-if="I < 1">
+                  {{ Zelle.zellenInhalt }}
                 </div>
               </div>
             </div>
           </div>
         </td>
+        <!-- Tabel Body Data -->
         <td class="t-body">
-          <div v-for="(item, i) in Tabelle.data">
+          <div
+            v-for="(Zeile, i) in $store.getters.currentTabelleData"
+            :key="i">
             <div
               class="zeile"
-              v-if="Tabelle.data[i] != Tabelle.data[0]">
-              <div v-for="(el, elI) in item">
+              v-if="i != 0">
+              <div
+                v-for="(Zelle, I) in Zeile"
+                :key="I">
                 <div
-                  :class="el.activ ? 'zelle-activ' : 'zelle'"
-                  @click="getClickedItem(i, elI, el.zellenInhalt)"
-                  v-if="elI > 0 && elI >= seite.start && elI < seite.ende">
-                  {{ el.zellenInhalt }}
+                  :class="Zelle.activ ? 'zelle-activ' : 'zelle'"
+                  @click="getClickedItem(i, I, Zelle.zellenInhalt)"
+                  v-if="
+                    I > 0 &&
+                    I >= $store.getters.CurrentSeiteStart &&
+                    I <= $store.getters.CurrentSeiteEnde
+                  ">
+                  {{ Zelle.zellenInhalt }}
                 </div>
               </div>
             </div>
@@ -722,79 +353,136 @@ export default {
         </td>
       </tr>
     </tbody>
+    <!-- Seiten Wechseln -->
     <div class="seiten-rapper">
       <button
-        :class="btnSeitenLinks ? 'btn-seiten' : 'hidde'"
-        @click="seiteZurück()">
+        :class="$store.getters.BtnSeitenLinks ? 'btn-seiten-FL' : 'hidde'"
+        @click="$store.commit('SeiteFirst')">
+        First
+      </button>
+      <button
+        :class="$store.getters.BtnSeitenLinks ? 'btn-seiten' : 'hidde'"
+        @click="$store.commit('SeiteZurück')">
         <ion-icon name="chevron-back-outline"></ion-icon>
       </button>
       <div class="btn-seiten zahl">
-        {{ seite.Zahl }}
+        {{ $store.getters.CurrentSeiteZahl }}
       </div>
       <button
-        :class="btnseitenRechts ? 'btn-seiten' : 'hidde'"
-        @click="seiteVor()">
+        :class="$store.getters.BtnSeitenRechts ? 'btn-seiten' : 'hidde'"
+        @click="$store.commit('SeiteVor')">
         <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+      <button
+        :class="$store.getters.BtnSeitenRechts ? 'btn-seiten-FL' : 'hidde'"
+        @click="$store.commit('SeiteLast')">
+        Last
       </button>
     </div>
   </table>
 </template>
 
 <style>
-.zahl {
-  width: 2.5rem;
+/* --- Global Styls --- */
+:root {
+  --MainColor: #fff;
+
+  --SecondaryColor: #000;
+
+  --table-border-color: #e9ecef;
 }
-.seiten-rapper {
-  padding: 1rem 2rem;
+
+#app {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
+html {
+  font-size: 62.5%;
+  overflow: hidden;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  color: var(--SecondaryColor);
+  background: var(--MainColor);
+  transition: color 0.5s, background-color 0.5s;
+  line-height: 1.6;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 ion-icon {
   padding: 2px;
   font-size: 20px;
-  color: var(--black);
+  color: var(--SecondaryColor);
 }
-.btn-seiten {
+
+.hidde {
+  display: none;
+}
+
+.noTabel {
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 2px solid var(--black);
-
-  border-radius: 50%;
-  background-color: var(--white);
-  font-size: 1.5rem;
 }
+.noTabel-text {
+  font-size: xx-large;
+}
+/* --- Header --- */
 header {
   display: flex;
   gap: 1rem;
-  border-bottom: 2px solid var(--black);
+
   padding: 2rem 4rem;
 }
 ::-webkit-file-upload-button {
   padding: 0.5rem 1rem;
   border-radius: 11px;
-  background-color: var(--white);
+  background-color: var(--MainColor);
   font-size: 1.5rem;
+  border: 0.5px solid var(--SecondaryColor);
 }
 .auswahl-container {
-  background-color: var(--white);
-  border: 2px solid;
+  background-color: var(--MainColor);
+  border: 0.5px solid var(--SecondaryColor);
   width: 20rem;
 }
 .add-tabellEL {
   height: 100%;
 }
 .btn-download {
-  border: 2px solid var(--black);
+  border: 0.5px solid var(--SecondaryColor);
   padding: 0.5rem 1rem;
-  border-radius: 11px;
-  background-color: var(--white);
+  border-radius: 1.2rem;
+  background-color: var(--MainColor);
   font-size: 1.5rem;
+  color: var(--SecondaryColor);
 }
 .btn-download:link {
   text-decoration: none;
-  color: var(--black);
 }
 /* The switch - the box around the slider */
 .switch {
@@ -831,7 +519,7 @@ header {
   width: 26px;
   left: 4px;
   bottom: 4px;
-  background-color: var(--white);
+  background-color: var(--MainColor);
   -webkit-transition: 0.4s;
   transition: 0.4s;
 }
@@ -840,7 +528,7 @@ input:checked + .slider:before {
   -webkit-transform: translateX(2.6rem);
   -ms-transform: translateX(2.6rem);
   transform: translateX(2.6rem);
-  background-color: var(--black);
+  background-color: var(--SecondaryColor);
 }
 
 /* Rounded sliders */
@@ -851,6 +539,9 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+/* Tabel Header */
+
 .tabel-info {
   display: flex;
   gap: 1rem;
@@ -858,8 +549,8 @@ input:checked + .slider:before {
 }
 .tabel-name {
   padding: 0.5rem 0.5rem;
-  background-color: var(--white);
-  border: 1px solid var(--black);
+  background-color: var(--MainColor);
+  border: 0.5px solid var(--SecondaryColor);
 
   width: 10%;
 }
@@ -868,23 +559,9 @@ input:checked + .slider:before {
 
   width: 90%;
 }
-.tabel-wraper {
-  height: 100%;
-  width: 100vw;
-}
-.hidde {
-  display: none;
-}
-.noTabel {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.noTabel-text {
-  font-size: xx-large;
-}
+
+/* Main Tabel */
+
 .rapperTop-btnDelet {
   display: flex;
   overflow: hidden;
@@ -949,6 +626,7 @@ tbody {
 .zeile {
   display: flex;
 }
+/* --- Zellen ---  */
 .zelle {
   overflow: hidden;
   text-align: center;
@@ -960,12 +638,12 @@ tbody {
 }
 
 .zelle:hover {
-  border: 1px solid var(--black);
+  border: 1px solid var(--SecondaryColor);
 }
 .zelle-activ {
   overflow: hidden;
   text-align: center;
-  border: 2px solid var(--black);
+  border: 1.9px solid var(--SecondaryColor);
 
   height: 2.5rem;
   width: 7.9rem;
@@ -983,5 +661,39 @@ tbody {
 
   height: 2.5rem;
   width: 7.9rem;
+}
+
+/* --- Seiten Wechseln --- */
+
+.seiten-rapper {
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.btn-seiten {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--SecondaryColor);
+
+  border-radius: 50%;
+  background-color: var(--MainColor);
+  font-size: 1.5rem;
+}
+.btn-seiten-FL {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--SecondaryColor);
+  padding: 0.5rem 1rem;
+  border-radius: 11px;
+  background-color: var(--MainColor);
+  font-size: 1.5rem;
+}
+.zahl {
+  width: 2.5rem;
+  padding: 0 0.5rem;
 }
 </style>

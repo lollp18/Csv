@@ -1,31 +1,31 @@
 <script>
+import { mapFields } from "vuex-map-fields"
 export default {
   name: "draggableContainer",
+  computed: {
+    ...mapFields({
+      ZeileEinfügenZeile: "bearbeiten.zeilen.zeilen",
 
+      ZeileEinfügenAnzahl: "bearbeiten.zeilen.anzahl",
+
+      ZeileTauschenErste: "bearbeiten.tauschen.zeilen.erste",
+
+      ZeileTauschenZweite: "bearbeiten.tauschen.zeilen.zweite",
+
+      SpalteEinfügeSpalte: "bearbeiten.spalten.spalten",
+
+      SpalteEinfügenAnzahl: "bearbeiten.spalten.anzahl",
+
+      SpalteTauschenErste: "bearbeiten.tauschen.spalten.erste",
+
+      SpalteTauschenZweite: "bearbeiten.tauschen.spalten.zweite",
+    }),
+  },
   props: {
-    TabellenGröße: Object,
     open: Boolean,
   },
   data() {
     return {
-      bearbeiten: {
-        zeilen: {
-          zeilen: undefined,
-          position: "Ü",
-          anzahl: undefined,
-        },
-        spalten: { spalten: undefined, position: "L", anzahl: undefined },
-        tauschen: {
-          zeilen: {
-            erste: undefined,
-            zweite: undefined,
-          },
-          spalten: {
-            erste: undefined,
-            zweite: undefined,
-          },
-        },
-      },
       check: {
         zeile: {
           einfügen: {
@@ -89,24 +89,25 @@ export default {
     },
 
     getOptionZeile(e) {
-      this.bearbeiten.zeilen.position = e.target.value
-      console.log(this.bearbeiten.zeilen.position)
+      this.$store.commit("GetOptionZeile", e.target.value)
     },
-    getOptionspalte(e) {
-      this.bearbeiten.spalten.position = e.target.value
-      console.log(this.bearbeiten.spalten.position)
-    },
+
     zeilenEinfügen() {
       if (
-        this.bearbeiten.zeilen.zeilen <= 0 ||
-        this.bearbeiten.zeilen.zeilen > this.TabellenGröße.hohe
+        this.$store.getters.ZeileEinfügenZeile <= 0 ||
+        this.$store.getters.ZeileEinfügenZeile >
+          this.$store.getters.TabelenHöhe ||
+        this.$store.getters.ZeileEinfügenZeile == undefined
       ) {
         this.check.zeile.einfügen.inputZeile = true
       } else {
         this.check.zeile.einfügen.inputZeile = false
       }
 
-      if (this.bearbeiten.zeilen.anzahl <= 0) {
+      if (
+        this.$store.getters.ZeileEinfügenAnzahl <= 0 ||
+        this.$store.getters.ZeileEinfügenAnzahl == undefined
+      ) {
         this.check.zeile.einfügen.anzahl = true
       } else {
         this.check.zeile.einfügen.anzahl = false
@@ -116,76 +117,94 @@ export default {
         this.check.zeile.einfügen.inputZeile == false &&
         this.check.zeile.einfügen.anzahl == false
       ) {
-        this.$emit("zeilenEinfügen", this.bearbeiten.zeilen)
+        this.$store.commit("ZeilenEinfügen")
       }
     },
+
     zeilenTauschen() {
       if (
-        this.bearbeiten.tauschen.zeilen.erste <= 0 ||
-        this.bearbeiten.tauschen.zeilen.erste > this.TabellenGröße.hohe
+        this.$store.getters.ZeileTauschenErste <= 0 ||
+        this.$store.getters.ZeileTauschenErste >
+          this.$store.getters.TabelenHöhe ||
+        this.$store.getters.ZeileTauschenErste == undefined
       ) {
         this.check.zeile.tauschen.inputOben = true
       } else {
         this.check.zeile.tauschen.inputOben = false
       }
       if (
-        this.bearbeiten.tauschen.zeilen.zweite <= 0 ||
-        this.bearbeiten.tauschen.zeilen.zweite > this.TabellenGröße.hohe
+        this.$store.getters.ZeileTauschenZweite <= 0 ||
+        this.$store.getters.ZeileTauschenZweite >
+          this.$store.getters.TabelenHöhe ||
+        this.$store.getters.ZeileTauschenZweite == undefined
       ) {
         this.check.zeile.tauschen.inputUnten = true
       } else {
         this.check.zeile.tauschen.inputUnten = false
       }
       if (
-        this.check.zeile.tauschen.inputOben == false ||
+        this.check.zeile.tauschen.inputOben == false &&
         this.check.zeile.tauschen.inputUnten == false
       ) {
-        this.$emit("zeilenTauschen", this.bearbeiten.tauschen.zeilen)
+        this.$store.commit("ZeilenTauschen")
       }
     },
+    getOptionSpalte(e) {
+      this.$store.commit("GetOptionSpalte", e.target.value)
+    },
     spaltenEinfügen() {
+      console.log("ok")
       if (
-        this.bearbeiten.spalten.spalten <= 0 ||
-        this.bearbeiten.spalten.spalten > this.TabellenGröße.breite
+        this.$store.getters.SpalteEinfügeSpalte <= 0 ||
+        this.$store.getters.SpalteEinfügeSpalte >
+          this.$store.getters.TabelenBreite ||
+        this.$store.getters.SpalteEinfügeSpalte == undefined
       ) {
         this.check.spalten.einfügen.inputZeile = true
       } else {
         this.check.spalten.einfügen.inputZeile = false
       }
-      if (this.bearbeiten.spalten.anzahl <= 0) {
+
+      if (
+        this.$store.getters.SpalteEinfügenAnzahl <= 0 ||
+        this.$store.getters.SpalteEinfügenAnzahl == undefined
+      ) {
         this.check.spalten.einfügen.anzahl = true
       } else {
         this.check.spalten.einfügen.anzahl = false
       }
+
       if (
         this.check.spalten.einfügen.inputZeile == false &&
         this.check.spalten.einfügen.anzahl == false
       ) {
-        this.$emit("spaltenEinfügen", this.bearbeiten.spalten)
+        this.$store.commit("SpaltenEinfügen")
       }
     },
     spaltenTauschen() {
       if (
-        this.bearbeiten.tauschen.spalten.erste <= 0 ||
-        this.bearbeiten.tauschen.spalten.erste > this.TabellenGröße.hohe
+        this.$store.getters.SpalteTauschenErste <= 0 ||
+        this.$store.getters.SpalteTauschenErste >
+          this.$store.getters.TabelenHöhe
       ) {
         this.check.spalten.tauschen.inputOben = true
       } else {
         this.check.spalten.tauschen.inputOben = false
       }
       if (
-        this.bearbeiten.tauschen.spalten.zweite <= 0 ||
-        this.bearbeiten.tauschen.spalten.zweite > this.TabellenGröße.hohe
+        this.$store.getters.SpalteTauschenZweite <= 0 ||
+        this.$store.getters.SpalteTauschenZweite >
+          this.$store.getters.TabelenHöhe
       ) {
         this.check.spalten.tauschen.inputUnten = true
       } else {
         this.check.spalten.tauschen.inputUnten = false
       }
       if (
-        this.check.spalten.tauschen.inputOben == false ||
+        this.check.spalten.tauschen.inputOben == false &&
         this.check.spalten.tauschen.inputUnten == false
       ) {
-        this.$emit("spaltenTauschen", this.bearbeiten.tauschen.spalten)
+        this.$store.commit("SpaltenTauschen")
       }
     },
   },
@@ -210,7 +229,7 @@ export default {
                 <h2>Zeilen Einfügen</h2>
                 <input
                   :class="check.zeile.einfügen.inputZeile ? 'invalid' : ''"
-                  v-model="bearbeiten.zeilen.zeilen"
+                  v-model="ZeileEinfügenZeile"
                   placeholder="Welche zeile"
                   type="number" />
                 <select @change="getOptionZeile">
@@ -219,7 +238,7 @@ export default {
                 </select>
                 <input
                   :class="check.zeile.einfügen.anzahl ? 'invalid' : ''"
-                  v-model="bearbeiten.zeilen.anzahl"
+                  v-model="ZeileEinfügenAnzahl"
                   placeholder="Anzahl"
                   type="number" />
                 <button @click="zeilenEinfügen()">Einfügen</button>
@@ -228,16 +247,16 @@ export default {
                 <h2>Spalten Einfügen</h2>
                 <input
                   :class="check.spalten.einfügen.inputZeile ? 'invalid' : ''"
-                  v-model="bearbeiten.spalten.spalten"
+                  v-model="SpalteEinfügeSpalte"
                   placeholder="Welche spalte"
                   type="number" />
-                <select @change="getOptionspalte">
+                <select @change="getOptionSpalte">
                   <option value="L">Links</option>
                   <option value="R">Rechts</option>
                 </select>
                 <input
                   :class="check.spalten.einfügen.anzahl ? 'invalid' : ''"
-                  v-model="bearbeiten.spalten.anzahl"
+                  v-model="SpalteEinfügenAnzahl"
                   placeholder="Anzahl"
                   type="number" />
                 <button @click="spaltenEinfügen()">Einfügen</button>
@@ -248,12 +267,12 @@ export default {
                 <h2>Zeilen Tauschen</h2>
                 <input
                   :class="check.zeile.tauschen.inputOben ? 'invalid' : ''"
-                  v-model="bearbeiten.tauschen.zeilen.erste"
+                  v-model="ZeileTauschenErste"
                   placeholder="zeile eintragen"
                   type="number" />
                 <input
                   :class="check.zeile.tauschen.inputUnten ? 'invalid' : ''"
-                  v-model="bearbeiten.tauschen.zeilen.zweite"
+                  v-model="ZeileTauschenZweite"
                   placeholder="zeile eintragen"
                   type="number" />
                 <button @click="zeilenTauschen">Tauschen</button>
@@ -262,13 +281,13 @@ export default {
                 <h2>Spalte Tauschen</h2>
                 <input
                   :class="check.spalten.tauschen.inputOben ? 'invalid' : ''"
-                  v-model="bearbeiten.tauschen.spalten.erste"
-                  placeholder="zeile eintragen"
+                  v-model="SpalteTauschenErste"
+                  placeholder="spalte eintragen"
                   type="number" />
                 <input
                   :class="check.spalten.tauschen.inputUnten ? 'invalid' : ''"
-                  v-model="bearbeiten.tauschen.spalten.zweite"
-                  placeholder="zeile eintragen"
+                  v-model="SpalteTauschenZweite"
+                  placeholder="spalte eintragen"
                   type="number" />
                 <button @click="spaltenTauschen">Tauschen</button>
               </div>
@@ -309,8 +328,8 @@ export default {
   border-radius: 11px;
   position: absolute;
   z-index: 99;
-  border: 2px solid var(--black);
-  background-color: var(--white);
+  border: 2px solid var(--SecondaryColor);
+  background-color: var(--MainColor);
   width: 50rem;
   height: 70rem;
 }
@@ -318,7 +337,7 @@ export default {
   z-index: 99;
   width: 1rem;
   margin: 2px;
-  background-color: var(--white);
+  background-color: var(--MainColor);
 }
 .menü-rapper {
   display: flex;
@@ -331,20 +350,20 @@ export default {
   height: 50%;
 }
 .se2 {
-  border-top: 2px solid var(--black);
+  border-top: 2px solid var(--SecondaryColor);
 }
 
 .b1,
 .b3 {
-  border-right: 1px solid var(--black);
+  border-right: 1px solid var(--SecondaryColor);
 }
 .b2,
 .b4 {
-  border-left: 1px solid var(--black);
+  border-left: 1px solid var(--SecondaryColor);
 }
 
 .box {
-  background-color: var(--white);
+  background-color: var(--MainColor);
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
@@ -355,14 +374,14 @@ export default {
 ion-icon {
   padding: 2px;
   font-size: 25px;
-  color: var(--black);
+  color: var(--SecondaryColor);
 }
 [name="close-outline"] {
   color: #c92a2a;
 }
 input {
-  background-color: var(--white);
-  border: 2px solid var(--black);
+  background-color: var(--MainColor);
+  border: 2px solid var(--SecondaryColor);
   border-radius: 11px;
   font-size: 1.5rem;
   padding: 0.5rem 0.5rem;
@@ -371,17 +390,17 @@ input {
   border: 2px solid #c92a2a;
 }
 select {
-  background-color: var(--white);
+  background-color: var(--MainColor);
   border: 2px solid;
   border-radius: 11px;
   font-size: 1.5rem;
   padding: 0.5rem 0.5rem;
 }
 button {
-  border: 2px solid var(--black);
+  border: 2px solid var(--SecondaryColor);
   padding: 0.2rem 0.2rem;
   border-radius: 11px;
-  background-color: var(--white);
+  background-color: var(--MainColor);
   font-size: 1.5rem;
 }
 .btnclose {

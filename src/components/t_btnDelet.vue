@@ -9,7 +9,7 @@
   justify-content: center;
   align-items: center;
   border: 1px solid var(--table-border-color);
-  background-color: var(--white);
+  background-color: var(--MainColor);
   height: 2.5rem;
   width: 7.9rem;
 }

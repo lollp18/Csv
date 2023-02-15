@@ -1,21 +1,31 @@
 <script>
+import { mapFields } from "vuex-map-fields"
 export default {
   name: "draggableContainer",
+  computed: {
+    ...mapFields({
+      ZellenTauschenErsteZeile: "zellenTauschen.ersteZelle.zeile",
 
+      ZellenTauschenErsteSpalte: "zellenTauschen.ersteZelle.spalte",
+
+      ZellenTauschenZweiteZeile: "zellenTauschen.zweiteZelle.zeile",
+
+      ZellenTauschenZweiteSpalte: "zellenTauschen.zweiteZelle.spalte",
+    }),
+  },
   props: { open: Boolean },
   data() {
     return {
-      zellenTauschen: {
+      check: {
         ersteZelle: {
-          zeile: undefined,
-          spalte: undefined,
+          zeile: false,
+          spalte: false,
         },
         zweiteZelle: {
-          zeile: undefined,
-          spalte: undefined,
+          zeile: false,
+          spalte: false,
         },
       },
-
       positions: {
         clientX: undefined,
         clientY: undefined,
@@ -54,6 +64,66 @@ export default {
       document.onmouseup = null
       document.onmousemove = null
     },
+    ZellenTauschen() {
+      // Check Erste Zelle
+
+      if (
+        this.$store.getters.ZellenTauschenErsteZeile <= 0 ||
+        this.$store.getters.ZellenTauschenErsteZeile >
+          this.$store.getters.TabelenHöhe ||
+        this.$store.getters.ZellenTauschenErsteZeile == undefined
+      ) {
+        this.check.ersteZelle.zeile = true
+      } else {
+        this.check.ersteZelle.zeile = false
+      }
+
+      if (
+        this.$store.getters.ZellenTauschenErsteSpalte <= 0 ||
+        this.$store.getters.ZellenTauschenErsteSpalte >
+          this.$store.getters.TabelenBreite ||
+        this.$store.getters.ZellenTauschenErsteSpalte == undefined
+      ) {
+        this.check.ersteZelle.spalte = true
+      } else {
+        this.check.ersteZelle.spalte = false
+      }
+
+      // Check Zweite Zelle
+
+      if (
+        this.$store.getters.ZellenTauschenZweiteZeile <= 0 ||
+        this.$store.getters.ZellenTauschenZweiteZeile >
+          this.$store.getters.TabelenHöhe ||
+        this.$store.getters.ZellenTauschenZweiteZeile == undefined
+      ) {
+        this.check.zweiteZelle.zeile = true
+      } else {
+        this.check.zweiteZelle.zeile = false
+      }
+
+      if (
+        this.$store.getters.ZellenTauschenZweiteSpalte <= 0 ||
+        this.$store.getters.ZellenTauschenZweiteSpalte >
+          this.$store.getters.TabelenBreite ||
+        this.$store.getters.ZellenTauschenZweiteSpalte == undefined
+      ) {
+        this.check.zweiteZelle.spalte = true
+      } else {
+        this.check.zweiteZelle.spalte = false
+      }
+
+      // check All Validation
+
+      if (
+        this.check.ersteZelle.zeile == false &&
+        this.check.ersteZelle.spalte == false &&
+        this.check.zweiteZelle.zeile == false &&
+        this.check.zweiteZelle.spalte == false
+      ) {
+        this.$store.commit("ZellenTauschen")
+      }
+    },
   },
 }
 </script>
@@ -74,25 +144,29 @@ export default {
             <h2>Zellen Tauschen</h2>
             <div class="container">
               <input
-                v-model="zellenTauschen.ersteZelle.zeile"
+                :class="check.ersteZelle.zeile ? 'invalid' : ''"
+                v-model="ZellenTauschenErsteZeile"
                 type="number"
                 placeholder="Zeile" />
               <input
-                v-model="zellenTauschen.ersteZelle.spalte"
+                :class="check.ersteZelle.spalte ? 'invalid' : ''"
+                v-model="ZellenTauschenErsteSpalte"
                 type="number"
                 placeholder="Spalte" />
             </div>
             <div class="container">
               <input
-                v-model="zellenTauschen.zweiteZelle.zeile"
+                :class="check.zweiteZelle.zeile ? 'invalid' : ''"
+                v-model="ZellenTauschenZweiteZeile"
                 type="number"
                 placeholder="Zeile" />
               <input
-                v-model="zellenTauschen.zweiteZelle.spalte"
+                :class="check.zweiteZelle.spalte ? 'invalid' : ''"
+                v-model="ZellenTauschenZweiteSpalte"
                 type="number"
                 placeholder="Spalte" />
             </div>
-            <button @click="zellenTauschen">Tauschen</button>
+            <button @click="ZellenTauschen">Tauschen</button>
           </div>
         </slot>
         <slot name="footer"
@@ -129,8 +203,8 @@ export default {
   border-radius: 11px;
   position: absolute;
   z-index: 99;
-  border: 2px solid var(--black);
-  background-color: var(--white);
+  border: 2px solid var(--SecondaryColor);
+  background-color: var(--MainColor);
   width: 25rem;
   height: 35rem;
 }
@@ -138,7 +212,7 @@ export default {
   z-index: 99;
   width: 1rem;
   margin: 2px;
-  background-color: var(--white);
+  background-color: var(--MainColor);
 }
 .menü-rapper {
   display: flex;
@@ -156,14 +230,14 @@ export default {
 ion-icon {
   padding: 2px;
   font-size: 25px;
-  color: var(--black);
+  color: var(--SecondaryColor);
 }
 [name="close-outline"] {
   color: #c92a2a;
 }
 input {
-  background-color: var(--white);
-  border: 2px solid var(--black);
+  background-color: var(--MainColor);
+  border: 2px solid var(--SecondaryColor);
   border-radius: 11px;
   font-size: 1.5rem;
   padding: 0.5rem 0.5rem;
@@ -174,17 +248,17 @@ input {
   border: 2px solid #c92a2a;
 }
 select {
-  background-color: var(--white);
+  background-color: var(--MainColor);
   border: 2px solid;
   border-radius: 11px;
   font-size: 1.5rem;
   padding: 0.5rem 0.5rem;
 }
 button {
-  border: 2px solid var(--black);
+  border: 2px solid var(--SecondaryColor);
   padding: 0.5rem 0.5rem;
   border-radius: 11px;
-  background-color: var(--white);
+  background-color: var(--MainColor);
   font-size: 1.5rem;
 }
 .btnclose {

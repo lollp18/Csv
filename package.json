@@ -10,7 +10,10 @@
     "@vueuse/components": "^9.10.0",
     "@vueuse/core": "^9.10.0",
     "papaparse": "^5.3.2",
-    "vue": "^3.2.41"
+    "vue": "^3.2.41",
+    "vue-resize-observer": "^2.0.15",
+    "vuex": "^4.0.2",
+    "vuex-map-fields": "^1.4.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^3.1.2",
