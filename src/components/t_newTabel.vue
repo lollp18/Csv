@@ -1,7 +1,6 @@
 <script>
 import { mapFields } from "vuex-map-fields"
 
-import { Zelle, Tabel } from "./Classes"
 export default {
   props: {
     open: Boolean,
@@ -96,12 +95,12 @@ export default {
           <div class="new-Tabel-btnRapper">
             <button
               @click="tabellErstellen"
-              class="btn-download font">
+              class="btn font">
               Tabelle Generiren
             </button>
             <button
               @click="$emit('close')"
-              class="btn-download font">
+              class="btn font">
               Abrechen
             </button>
           </div>
@@ -111,16 +110,6 @@ export default {
   </Teleport>
 </template>
 <style scoped>
-.v-enter-active,
-.v-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.v-enter-from,
-.v-leave-to {
-  opacity: 0;
-  transform: scale(1.1);
-}
 .new-Tabel-bg {
   position: fixed;
   display: flex;
@@ -158,7 +147,7 @@ export default {
 }
 .new-Tabel-input-invalid {
   background-color: var(--MainColor);
-  border: 2px solid #c92a2a;
+  border: 2px solid var(--Invalide-CloseColor);
   font-size: 1.8rem;
   padding: 0.5rem 0.5rem;
 }

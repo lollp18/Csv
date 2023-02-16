@@ -14,7 +14,6 @@
   width: 7.9rem;
 }
 ion-icon {
-  font-size: 20px;
-  color: #c92a2a;
+  color: var(--Invalide-CloseColor);
 }
 </style>

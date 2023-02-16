@@ -154,39 +154,32 @@ export default {
       </option>
     </select>
     <button
-      class="btn-download"
+      class="btn"
       @click="Tbearbeiten = true">
       Tabelle Bearbeiten
     </button>
     <button
-      class="btn-download"
+      class="btn"
       @click="ZellenTauschen = true">
       Zellen Tauschen
     </button>
     <button
-      class="btn-download"
+      class="btn"
       @click="newTabelopen = true">
       Neue Tabelle erstellen
     </button>
     <a
-      class="btn-download"
+      class="btn"
       @click="$store.commit('downlodFile')"
       :href="$store.getters.href"
       :download="TabelName"
       >Download</a
     >
     <button
-      class="btn-download"
+      class="btn"
       @click="DeletTabel">
       Tabelle Löschen
     </button>
-
-    <label class="switch">
-      <input
-        type="checkbox"
-        @click="darkMode" />
-      <span class="slider round"></span>
-    </label>
   </header>
 
   <div :class="noTabelhidde ? 'hidde' : 'noTabel'">
@@ -390,6 +383,8 @@ export default {
   --SecondaryColor: #000;
 
   --table-border-color: #e9ecef;
+
+  --Invalide-CloseColor: #c92a2a;
 }
 
 #app {
@@ -451,6 +446,54 @@ ion-icon {
 .noTabel-text {
   font-size: xx-large;
 }
+
+/* --- components --- */
+
+.draggable-container {
+  top: 50%;
+  left: 50%;
+
+  display: flex;
+  flex-direction: column;
+  border-radius: 11px;
+  position: absolute;
+  z-index: 99;
+  border: 2px solid var(--SecondaryColor);
+  background-color: var(--MainColor);
+}
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+  transform: scale(1.1);
+}
+.draggable-header {
+  z-index: 99;
+  width: 1rem;
+  margin: 2px;
+  background-color: var(--MainColor);
+}
+.menü-rapper {
+  display: flex;
+  flex-direction: column;
+
+  height: 90%;
+}
+
+.btnclose {
+  border-radius: 9px;
+}
+
+.btnclose ion-icon {
+  color: var(--Invalide-CloseColor);
+}
+.invalid {
+  border: 2px solid var(--Invalide-CloseColor);
+}
 /* --- Header --- */
 header {
   display: flex;
@@ -473,7 +516,7 @@ header {
 .add-tabellEL {
   height: 100%;
 }
-.btn-download {
+.btn {
   border: 0.5px solid var(--SecondaryColor);
   padding: 0.5rem 1rem;
   border-radius: 1.2rem;
@@ -481,63 +524,8 @@ header {
   font-size: 1.5rem;
   color: var(--SecondaryColor);
 }
-.btn-download:link {
+.btn:link {
   text-decoration: none;
-}
-/* The switch - the box around the slider */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-/* Hide default HTML checkbox */
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-/* The slider */
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #82c91e;
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: var(--MainColor);
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
-}
-
-input:checked + .slider:before {
-  -webkit-transform: translateX(2.6rem);
-  -ms-transform: translateX(2.6rem);
-  transform: translateX(2.6rem);
-  background-color: var(--SecondaryColor);
-}
-
-/* Rounded sliders */
-.slider.round {
-  border-radius: 9px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
 }
 
 /* Tabel Header */

@@ -181,44 +181,15 @@ export default {
 </template>
 
 <style scoped>
-.v-enter-active,
-.v-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.v-enter-from,
-.v-leave-to {
-  opacity: 0;
-  transform: scale(1.1);
-}
-.hidde {
-  display: none;
-}
 .draggable-container {
-  top: 50%;
-  left: 50%;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  border-radius: 11px;
-  position: absolute;
-  z-index: 99;
-  border: 2px solid var(--SecondaryColor);
-  background-color: var(--MainColor);
   width: 25rem;
   height: 35rem;
 }
-.draggable-header {
-  z-index: 99;
-  width: 1rem;
-  margin: 2px;
-  background-color: var(--MainColor);
-}
+
 .menü-rapper {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  height: 90%;
+
   gap: 4rem;
 }
 .container {
@@ -228,13 +199,9 @@ export default {
   padding: 0 2rem;
 }
 ion-icon {
-  padding: 2px;
   font-size: 25px;
-  color: var(--SecondaryColor);
 }
-[name="close-outline"] {
-  color: #c92a2a;
-}
+
 input {
   background-color: var(--MainColor);
   border: 2px solid var(--SecondaryColor);
@@ -244,9 +211,7 @@ input {
   width: 100%;
   height: 100%;
 }
-.invalid {
-  border: 2px solid #c92a2a;
-}
+
 select {
   background-color: var(--MainColor);
   border: 2px solid;
@@ -260,8 +225,5 @@ button {
   border-radius: 11px;
   background-color: var(--MainColor);
   font-size: 1.5rem;
-}
-.btnclose {
-  border-radius: 9px;
 }
 </style>
