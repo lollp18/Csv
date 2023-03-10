@@ -9,26 +9,29 @@ import btnDelet from "./components/t_btnDelet.vue"
 import newTabel from "./components/t_newTabel.vue"
 import bearbeiten from "./components/t_Bearbeiten.vue"
 import ZellenTauschen from "./components/t_ZellenTauschen.vue"
-
+import SingelUp from "./components/t_SingelUp.vue"
+import Login from "./components/t_Login.vue"
 // Others
 
 import { ref } from "vue"
 
 export default {
   async created() {
+    this.$store.commit("SetApiUrlUserTabellen")
     await this.$store.dispatch("GetTabels")
     this.HasTabels()
   },
   async updated() {
     await this.$nextTick(async () => {
+      this.$store.commit("SetApiUrlUserTabellen")
       await this.$store.dispatch("SaveTabels")
       this.HasTabels()
       this.$store.commit("InitSeitenBerechnen")
     })
   },
   mounted() {
+    this.$store.commit("SetApiUrlUserTabellen")
     this.$store.commit("InitSeitenBerechnen")
-
     this.$store.commit("SetCurrentSeiteFirst")
     window.addEventListener("resize", () => {
       this.$store.commit("ResizeWindow")
@@ -44,6 +47,8 @@ export default {
     newTabel,
     bearbeiten,
     ZellenTauschen,
+    SingelUp,
+    Login,
   },
   computed: {
     ...mapFields({
@@ -127,6 +132,7 @@ export default {
 </script>
 
 <template>
+  
   <bearbeiten
     :open="Tbearbeiten"
     @closeTabelBearbeiten="Tbearbeiten = false" />
@@ -136,6 +142,13 @@ export default {
   <ZellenTauschen
     :open="ZellenTauschen"
     @closeZellenTauschen="ZellenTauschen = false" />
+
+  <SingelUp />
+
+  <Login
+    :open="$store.getters.LoginGet"
+    @close="$store.commit('LoginSet', false)" />
+
   <header>
     <input
       class="file-input"
@@ -180,6 +193,25 @@ export default {
       @click="DeletTabel">
       Tabelle Löschen
     </button>
+
+    <button
+      class="btn"
+      v-show="$store.getters.SingelUpBTN"
+      @click="this.$store.commit('SingelUpOpen')">
+      Registrieren
+    </button>
+    <button
+      class="btn"
+      v-show="$store.getters.LoginBTN"
+      @click="this.$store.commit('LoginOpen')">
+      Anmelden
+    </button>
+    <button
+      class="btn"
+      v-show="$store.getters.LogoutBTN"
+      @click="$store.dispatch('Abmelden')">
+      Abmelden
+    </button>
   </header>
 
   <div :class="noTabelhidde ? 'hidde' : 'noTabel'">
@@ -189,13 +221,17 @@ export default {
     <div class="tabel-info">
       <input
         class="tabel-name"
+        placeholder="Tabellenname"
         @input="$store.commit('SetCurrentTabelName')"
         v-model="CurrentTabelName" />
       <input
         class="zellen-inhalt"
+        placeholder="Zelleninhalt"
         type="text"
         @input="$store.commit('SetZellenValue')"
         v-model="CurrentZelleninhalt" />
+
+      <input placeholder="" />
     </div>
 
     <tbody>

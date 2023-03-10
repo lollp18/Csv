@@ -127,12 +127,30 @@ const Store = createStore({
       data: [],
       checkTabellName: false,
     },
-    darkMode: false,
 
-    apiURL: "http://localhost/",
-    tabelhidde: true,
-    noTabelhidde: false,
+    // Registrieren
+    Registrieren: {
+      Username: undefined,
+      Email: undefined,
+      Password: undefined,
+      PasswordWiederholen: undefined,
+    },
+    RegistrierenCheck: {
+      Username: false,
+      Email: false,
+      Password: false,
+      PasswordWiederholen: false,
+    },
+    // Login
 
+    Anmelden: {
+      Username: undefined,
+      Password: undefined,
+    },
+    AnmeldenCheck: {
+      Username: false,
+      Password: false,
+    },
     // Seiten
 
     SeitenVerwenden: {
@@ -151,10 +169,62 @@ const Store = createStore({
         ende: undefined,
       },
     },
+
+    ApiURLs: {
+      ApiUrlUsersRegistrieren: "http://localhost/users/Registrieren",
+      ApiUrlUsersAnmelden: "http://localhost/users/Anmelden",
+      ApiUrlUserTabellen: undefined,
+    },
+
+    SingelUp: false,
+    Login: false,
+    SingelUpBTN: true,
+    LoginBTN: true,
+    LogoutBTN: false,
   },
 
   getters: {
     getField,
+
+    LogoutBTN: (state) => state.LogoutBTN,
+
+    //Login
+
+    LoginBTN: (state) => state.LoginBTN,
+
+    LoginGet: (state) => state.Login,
+
+    AnmeldenCheckUsername: (state) => state.AnmeldenCheck.Username,
+
+    AnmeldenCheckPassword: (state) => state.AnmeldenCheck.Password,
+
+    AnmeldenUsername: (state) => state.Anmelden.Username,
+
+    AnmeldenPassword: (state) => state.Anmelden.Password,
+
+    // Registrieren
+
+    SingelUpBTN: (state) => state.SingelUpBTN,
+
+    SingelUpGet: (state) => state.SingelUp,
+
+    RegistrierenCheckUsername: (state) => state.RegistrierenCheck.Username,
+
+    RegistrierenCheckEmail: (state) => state.RegistrierenCheck.Email,
+
+    RegistrierenCheckPassword: (state) => state.RegistrierenCheck.Password,
+
+    RegistrierenCheckPasswordWiederholen: (state) =>
+      state.RegistrierenCheck.PasswordWiederholen,
+
+    RegistrierenUsername: (state) => state.Registrieren.Username,
+
+    RegistrierenEmail: (state) => state.Registrieren.Email,
+
+    RegistrierenPassword: (state) => state.Registrieren.Password,
+
+    RegistrierenPasswordWiederholen: (state) =>
+      state.Registrieren.PasswordWiederholen,
 
     // Seiten
 
@@ -250,7 +320,27 @@ const Store = createStore({
   mutations: {
     updateField,
 
+    //Anmelden
+
+    LoginClose(state) {
+      state.Login = false
+    },
+
+    LoginOpen(state) {
+      state.Login = true
+    },
+
+    // Registrieren
+
+    SingelUpclose(state) {
+      state.SingelUp = false
+    },
+    SingelUpOpen(state) {
+      state.SingelUp = true
+    },
+
     // Seiten erstellen
+
     InitSeitenBerechnen() {
       Store.commit("SetTabelSize")
       Store.commit("BrechneMax")
@@ -590,7 +680,7 @@ const Store = createStore({
 
       const Tabell = new Tabel(state.UploadeFile.fileName, data)
       state.currentTabelles.unshift(Tabell)
-
+      
       state.currentTabelleID = 0
       state.currentTabelle.TabelName = Tabell.TabelName
       state.currentTabelle.data = Tabell.data
@@ -661,8 +751,203 @@ const Store = createStore({
 
       state.currentTabelle = state.currentTabelles[state.currentTabelleID]
     },
+
+    SetApiUrlUserTabellen(state) {
+      if (localStorage.length > 0) {
+        this.state.LoginBTN = false
+        this.state.SingelUpBTN = false
+        this.state.LogoutBTN = true
+        const User = JSON.parse(localStorage.getItem("User"))
+
+        state.ApiURLs.ApiUrlUserTabellen = `http://localhost/users/${User.Username}/Tabellen`
+      }
+    },
   },
   actions: {
+    // Abmelden
+
+    async Abmelden() {
+      localStorage.clear()
+
+      this.state.SingelUpBTN = true
+      this.state.LoginBTN = true
+      this.state.LogoutBTN = false
+    },
+
+    //Anmelden
+    async Anmelden() {
+      try {
+        if (
+          this.state.Anmelden.Username == "" ||
+          this.state.Anmelden.Username == undefined
+        ) {
+          this.state.AnmeldenCheck.Username = true
+
+          this.state.Anmelden.Password = undefined
+        } else {
+          this.state.AnmeldenCheck.Username = false
+        }
+
+        if (
+          this.state.Anmelden.Password == "" ||
+          this.state.Anmelden.Password == undefined
+        ) {
+          this.state.AnmeldenCheck.Password = true
+        } else {
+          this.state.AnmeldenCheck.Password = false
+        }
+
+        if (
+          this.state.AnmeldenCheck.Username == false &&
+          this.state.AnmeldenCheck.Password == false
+        ) {
+          const UserData = this.state.Anmelden
+          const Json = JSON.stringify(UserData)
+
+          const optons = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: Json,
+          }
+
+          const res = await fetch(
+            this.state.ApiURLs.ApiUrlUsersAnmelden,
+            optons
+          )
+          const data = await res.json()
+
+          if (data === "NoUser") {
+            this.state.AnmeldenCheck.Username = false
+            this.state.Anmelden.Password = undefined
+          } else {
+            this.state.AnmeldenCheck.Username = true
+          }
+
+          if (data === "Password") {
+            this.state.AnmeldenCheck.Password = false
+          } else {
+            this.state.AnmeldenCheck.Username = true
+          }
+          if (data.Angemeldet === true) {
+            localStorage.setItem("User", JSON.stringify(data))
+            this.state.LoginBTN = false
+            this.state.SingelUpBTN = false
+            this.state.LogoutBTN = true
+            Store.commit("LoginClose")
+          }
+        }
+      } catch (e) {
+        console.error(e.message)
+      }
+    },
+
+    // Registrieren
+    async Registrieren() {
+      try {
+        if (
+          this.state.Registrieren.Username == "" ||
+          this.state.Registrieren.Username == undefined
+        ) {
+          this.state.RegistrierenCheck.Username = true
+
+          this.state.Registrieren.Password = undefined
+          this.state.Registrieren.PasswordWiederholen = undefined
+        } else {
+          this.state.RegistrierenCheck.Username = false
+        }
+
+        if (
+          this.state.Registrieren.Email == "" ||
+          this.state.Registrieren.Email == undefined
+        ) {
+          this.state.RegistrierenCheck.Email = true
+
+          this.state.Registrieren.Password = undefined
+          this.state.Registrieren.PasswordWiederholen = undefined
+        } else {
+          this.state.RegistrierenCheck.Email = false
+        }
+
+        if (
+          this.state.Registrieren.Password == "" ||
+          this.state.Registrieren.Password == undefined
+        ) {
+          this.state.RegistrierenCheck.Password = true
+
+          this.state.Registrieren.Password = undefined
+          this.state.Registrieren.PasswordWiederholen = undefined
+        } else {
+          this.state.RegistrierenCheck.Password = false
+        }
+
+        if (
+          this.state.Registrieren.PasswordWiederholen == "" ||
+          this.state.Registrieren.PasswordWiederholen == undefined
+        ) {
+          this.state.RegistrierenCheck.PasswordWiederholen = true
+
+          this.state.Registrieren.Password = undefined
+          this.state.Registrieren.PasswordWiederholen = undefined
+        } else {
+          this.state.RegistrierenCheck.PasswordWiederholen = false
+        }
+
+        if (
+          this.state.RegistrierenCheck.Username == false &&
+          this.state.RegistrierenCheck.Email == false &&
+          this.state.RegistrierenCheck.Password == false &&
+          this.state.RegistrierenCheck.PasswordWiederholen == false
+        ) {
+          const UserData = this.state.Registrieren
+          const Json = JSON.stringify(UserData)
+
+          const optons = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: Json,
+          }
+
+          const res = await fetch(
+            this.state.ApiURLs.ApiUrlUsersRegistrieren,
+            optons
+          )
+          const data = await res.json()
+
+          if (data === "UserTaken") {
+            this.state.RegistrierenCheck.Username = true
+            this.state.Registrieren.Password = undefined
+            this.state.Registrieren.PasswordWiederholen = undefined
+          } else {
+            this.state.RegistrierenCheck.Username = false
+          }
+          if (data === "EmailInvalid") {
+            this.state.RegistrierenCheck.Email = true
+            this.state.Registrieren.Password = undefined
+            this.state.Registrieren.PasswordWiederholen = undefined
+          } else {
+            this.state.RegistrierenCheck.Email = false
+          }
+          if (data === "PasswordWiederholen") {
+            this.state.RegistrierenCheck.Password = true
+            this.state.RegistrierenCheck.PasswordWiederholen = true
+            this.state.Registrieren.Password = undefined
+            this.state.Registrieren.PasswordWiederholen = undefined
+          } else {
+            this.state.RegistrierenCheck.Password = false
+            this.state.RegistrierenCheck.PasswordWiederholen = false
+          }
+
+          if (data === "UserErstelt") {
+            Store.commit("SingelUpclose")
+
+            Store.commit("LoginOpen")
+          }
+        }
+      } catch (e) {
+        console.error(e.message)
+      }
+    },
+
     // Uploade File
 
     async GetData(state, e) {
@@ -681,7 +966,7 @@ const Store = createStore({
 
     async GetTabels() {
       try {
-        const res = await fetch(this.state.apiURL)
+        const res = await fetch(this.state.ApiURLs.ApiUrlUserTabellen)
 
         this.state.currentTabelles = await res.json()
 
@@ -706,12 +991,12 @@ const Store = createStore({
         const json = JSON.stringify(tabels)
 
         const optons = {
-          method: "POST",
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: json,
         }
 
-        const res = await fetch(this.state.apiURL, optons)
+        const res = await fetch(this.state.ApiURLs.ApiUrlUserTabellen, optons)
         console.log(res)
       } catch (e) {
         console.error(e.message)
@@ -731,7 +1016,7 @@ const Store = createStore({
           body: json,
         }
 
-        const res = await fetch(this.state.apiURL, optons)
+        const res = await fetch(this.state.ApiURLs.ApiUrlUserTabellen, optons)
       } catch (e) {
         console.log(e.message)
       }

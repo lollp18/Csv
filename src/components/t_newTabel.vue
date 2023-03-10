@@ -27,6 +27,7 @@ export default {
 
       if (
         this.$store.getters.NewTabellName == "" ||
+        this.$store.getters.NewTabellName == undefined ||
         this.$store.getters.CheckTabellName == true
       ) {
         this.invalidName = true
