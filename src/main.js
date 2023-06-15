@@ -905,6 +905,7 @@ const Store = createStore({
           const optons = {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            mode: 'no-cors',
             body: Json,
           }
 
@@ -967,7 +968,7 @@ const Store = createStore({
 
     async GetTabels() {
       try {
-        const res = await fetch(this.state.ApiURLs.ApiUrlUserTabellen)
+        const res = await fetch(this.state.ApiURLs.ApiUrlUserTabellen,{mode: 'no-cors'})
 
         this.state.currentTabelles = await res.json()
 
@@ -994,6 +995,7 @@ const Store = createStore({
         const optons = {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          mode: 'no-cors',
           body: json,
         }
 
@@ -1014,6 +1016,7 @@ const Store = createStore({
         const optons = {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
+          mode: 'no-cors',
           body: json,
         }
 
