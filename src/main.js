@@ -807,7 +807,7 @@ const Store = createStore({
           const optons = {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            mode: "no-cors",
+            mode: "cors",
             body: Json,
           }
 
@@ -905,7 +905,7 @@ const Store = createStore({
           const optons = {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            mode: 'no-cors',
+            mode: 'cors',
             body: Json,
           }
 
@@ -995,7 +995,7 @@ const Store = createStore({
         const optons = {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          mode: 'no-cors',
+          mode: 'cors',
           body: json,
         }
 
@@ -1016,7 +1016,7 @@ const Store = createStore({
         const optons = {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          mode: 'no-cors',
+          mode: 'cors',
           body: json,
         }
 
