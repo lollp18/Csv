@@ -968,7 +968,7 @@ const Store = createStore({
 
     async GetTabels() {
       try {
-        const res = await fetch(this.state.ApiURLs.ApiUrlUserTabellen,{mode: 'no-cors'})
+        const res = await fetch(this.state.ApiURLs.ApiUrlUserTabellen,{mode: 'cors'})
 
         this.state.currentTabelles = await res.json()
 
