@@ -171,8 +171,8 @@ const Store = createStore({
     },
 
     ApiURLs: {
-      ApiUrlUsersRegistrieren: "http://localhost/users/Registrieren",
-      ApiUrlUsersAnmelden: "http://localhost/users/Anmelden",
+      ApiUrlUsersRegistrieren: "https://csvdb.onrender.com/users/Registrieren",
+      ApiUrlUsersAnmelden: "https://csvdb.onrender.com/users/Anmelden",
       ApiUrlUserTabellen: undefined,
     },
 
@@ -680,7 +680,7 @@ const Store = createStore({
 
       const Tabell = new Tabel(state.UploadeFile.fileName, data)
       state.currentTabelles.unshift(Tabell)
-      
+
       state.currentTabelleID = 0
       state.currentTabelle.TabelName = Tabell.TabelName
       state.currentTabelle.data = Tabell.data
